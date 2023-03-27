@@ -1,3 +1,8 @@
+Final project for CPSC 452/552 Spring 2023.
+
+### Team members:
+Jakub Bester, Nikhil Harle, Frank Li, Ioannis Panitsas, Connor Totilas
+
 ## Project timeline:
 Now-April 15th: get barebones version running.
 - Make dataset
