@@ -6,7 +6,7 @@ Jakub Bester, Nikhil Harle, Frank Li, Ioannis Panitsas, Connor Totilas
 ## Project timeline:
 Now-April 15th: get barebones version running.
 - Make dataset (https://github.com/IBM/observation-majorana)
-- Import code into Github
+- Import QCNN code into Github (https://www.tensorflow.org/quantum/tutorials/qcnn)
 - Running and troubleshooting
 
 \April 15th-April 22nd: go off in different directions (see above). 
