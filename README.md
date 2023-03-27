@@ -5,7 +5,7 @@ Jakub Bester, Nikhil Harle, Frank Li, Ioannis Panitsas, Connor Totilas
 
 ## Project timeline:
 Now-April 15th: get barebones version running.
-- Make dataset
+- Make dataset (https://github.com/IBM/observation-majorana)
 - Import code into Github
 - Running and troubleshooting
 
