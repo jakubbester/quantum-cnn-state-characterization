@@ -9,7 +9,7 @@ Now-April 15th: get barebones version running.
 - Import QCNN code into Github (https://www.tensorflow.org/quantum/tutorials/qcnn)
 - Running and troubleshooting
 
-\April 15th-April 22nd: go off in different directions (see above). 
+April 15th-April 22nd: go off in different directions (see above). 
 - 2 people try different topological state
 - 3 people try adjusting structure
 
