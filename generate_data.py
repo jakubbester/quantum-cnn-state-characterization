@@ -1,4 +1,4 @@
-from ExperimentCode import MajoranaCircuit
+from source.ExperimentCode import MajoranaCircuit
 
 import tensorflow as tf
 import tensorflow_quantum as tfq
