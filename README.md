@@ -3,6 +3,14 @@ Final project for CPSC 452/552 Spring 2023.
 ### Team members:
 Jakub Bester, Nikhil Harle, Frank Li, Ioannis Panitsas, Connor Totilas
 
+## Project Experimental Directions:
+comparison to basic neural network
+increasing the number of filters / trying different unitaries
+increasing the depth of the conv net
+changing loss function and optimizer
+Trying on another topological state
+Noise Reduction with Encoding/Decoding + Res Net: https://arxiv.org/abs/2012.07772
+
 ## Project timeline:
 Now-April 15th: get barebones version running.
 - Make dataset (https://github.com/IBM/observation-majorana)
