@@ -227,7 +227,6 @@ class MajoranaDataset(Dataset):
 # Testing and Training functions
     
 def train(trainloader, train_labels, epochs = 10, n_qubits = 8, n_cycles = 4, lr = 5e-3, device = 'cpu'):
-    
     # calling model, loss, optimizer
     model = QCNN(n_qubits, n_cycles)
     lossfn = torch.nn.BCELoss()
