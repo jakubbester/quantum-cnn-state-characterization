@@ -35,3 +35,23 @@ April 22nd: Reconvene and start putting together paper!
 - Implement parallel feature maps
 - Implement backpropogation
 - Implement skip connections
+
+
+## Concrete project directions:
+1. Implementing multiple feature maps (shared weights) - Frank
+  - Making all QCNN quantum gates non trainable as a baseline comparison (purely classical NN)
+  - Do multiple feature maps with trainable unitaries
+  - Make sure we're implementing shared weights :)
+  
+2. Try for different (topological) state - Connor
+  - Find Qiskit circuit that prepares the state and add code to Github in the form of a function like QCNN.prepare_majorana()
+  - Ideas: AKLT, cluster state with excitation, whatever we want!
+  
+3. Play around with the QCNN structure - Jakub, Ioannis
+  - Try to find different trainable unitary gates
+  - Try making all gates in same conv/pool layer the same
+  
+Side things:  
+1. Running trained model on actual hardware (?!) - Nikhil
+
+2. Exploring QCAE (basically just adding circuit again but backwards lol) - Nikhil
