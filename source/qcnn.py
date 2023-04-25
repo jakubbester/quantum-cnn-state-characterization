@@ -96,12 +96,12 @@ class QCNN(nn.Module):
         self.u3_3(qdev, wires = 7)
 
         # second convolutional layer
-        self.crx7(qdev, wires=[0, 3])
+        self.crx7(qdev, wires=[1, 3])
         self.crx8(qdev, wires=[5, 7])
         self.crx9(qdev, wires=[3, 5])
 
         # second pooling layer
-        meas_qubits = [0,5]
+        meas_qubits = [1,5]
         _ = tqm.expval(qdev, meas_qubits, [self.meas_basis()] * len(meas_qubits))
         self.u3_4(qdev, wires = 3)
         self.u3_5(qdev, wires = 7)
