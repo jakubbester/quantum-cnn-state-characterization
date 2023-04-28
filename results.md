@@ -1,2 +1,2 @@
  - Benchmarking for different project directions can go here.
- - Classical Neural Network: 8 classical measurements, mlp from 8 -> 16 -> 1, training on 400, testing on 100; loss of 0.26, fluctuating often between 0.2 and 1.6, very low accuracy of 0.05
+ - Classical Neural Network: 8 classical measurements, mlp from 8 -> 16 -> 1, training on 400, testing on 100; loss of 0.26, fluctuating often between 0.2 and 1.6, very low accuracy of 0.05, unable to detect Majorana states; CHANGED OPTIMIZER LEARNING RATE to 5e-2, loss of 0.08, still fluctuating often between 0.02 and 1.86, relatively good accuracy of 0.59 now
