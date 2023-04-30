@@ -14,21 +14,22 @@ import copy
 from shared import sharedWeights
 
 class QCNN(nn.Module):
-    def __init__(self, n_qubits = 8, n_cycles = 4):
+    def __init__(self, n_qubits = 8, n_cycles = 4, weights = torch.randn(10)):
         super().__init__()
         self.n_qubits = n_qubits
         self.n_cycles = n_cycles
+        self.weights = weights
 
         self.meas_basis = tq.PauliZ
 
         # first convolutional layer
-        self.crx0 = tq.CRX(has_params=True, trainable=True)
-        self.crx1 = tq.CRX(has_params=True, trainable=True)
-        self.crx2 = tq.CRX(has_params=True, trainable=True)
-        self.crx3 = tq.CRX(has_params=True, trainable=True)
-        self.crx4 = tq.CRX(has_params=True, trainable=True)
-        self.crx5 = tq.CRX(has_params=True, trainable=True)
-        self.crx6 = tq.CRX(has_params=True, trainable=True)
+        self.cr0 = sharedWeights(self.weights[0])
+        self.cr1 = sharedWeights(self.weights[1])
+        self.cr2 = sharedWeights(self.weights[2])
+        self.cr3 = sharedWeights(self.weights[3])
+        self.cr4 = sharedWeights(self.weights[4])
+        self.cr5 = sharedWeights(self.weights[5])
+        self.cr6 = sharedWeights(self.weights[6])
 
         # first pooling layer
         self.u3_0 = tq.U3(has_params=True, trainable=True)
@@ -37,63 +38,35 @@ class QCNN(nn.Module):
         self.u3_3 = tq.U3(has_params=True, trainable=True)
 
         # second convolutional layer
-        self.crx7 = tq.CRX(has_params=True, trainable=True)
-        self.crx8 = tq.CRX(has_params=True, trainable=True)
-        self.crx9 = tq.CRX(has_params=True, trainable=True)
+        self.cr7 = sharedWeights(self.weights[7])
+        self.cr8 = sharedWeights(self.weights[8])
+        self.cr9 = sharedWeights(self.weights[9])
 
         # second pooling layer
         self.u3_4 = tq.U3(has_params=True, trainable=True)
         self.u3_5 = tq.U3(has_params=True, trainable=True)
 
-        # Second Layer
-        # first convolutional layer
-        self.crx10 = tq.CRY(has_params=True, trainable=True)
-        self.crx11 = tq.CRY(has_params=True, trainable=True)
-        self.crx12 = tq.CRY(has_params=True, trainable=True)
-        self.crx13 = tq.CRY(has_params=True, trainable=True)
-        self.crx14 = tq.CRY(has_params=True, trainable=True)
-        self.crx15 = tq.CRY(has_params=True, trainable=True)
-        self.crx16 = tq.CRY(has_params=True, trainable=True)
-
+        # Second Filter
         # first pooling layer
         self.u3_10 = tq.U3(has_params=True, trainable=True)
         self.u3_11 = tq.U3(has_params=True, trainable=True)
         self.u3_12 = tq.U3(has_params=True, trainable=True)
         self.u3_13 = tq.U3(has_params=True, trainable=True)
 
-        # second convolutional layer
-        self.crx17 = tq.CRY(has_params=True, trainable=True)
-        self.crx18 = tq.CRY(has_params=True, trainable=True)
-        self.crx19 = tq.CRY(has_params=True, trainable=True)
-
         # second pooling layer
         self.u3_14 = tq.U3(has_params=True, trainable=True)
         self.u3_15 = tq.U3(has_params=True, trainable=True)
 
-        # Third Layer
-        # first convolutional layer
-        self.crx20 = tq.CRZ(has_params=True, trainable=True)
-        self.crx21 = tq.CRZ(has_params=True, trainable=True)
-        self.crx22 = tq.CRZ(has_params=True, trainable=True)
-        self.crx23 = tq.CRZ(has_params=True, trainable=True)
-        self.crx24 = tq.CRZ(has_params=True, trainable=True)
-        self.crx25 = tq.CRZ(has_params=True, trainable=True)
-        self.crx26 = tq.CRZ(has_params=True, trainable=True)
-
+        # Third Filter
         # first pooling layer
         self.u3_20 = tq.U3(has_params=True, trainable=True)
         self.u3_21 = tq.U3(has_params=True, trainable=True)
         self.u3_22 = tq.U3(has_params=True, trainable=True)
         self.u3_23 = tq.U3(has_params=True, trainable=True)
 
-        # second convolutional layer
-        self.crx27 = tq.CRZ(has_params=True, trainable=True)
-        self.crx28 = tq.CRZ(has_params=True, trainable=True)
-        self.crx29 = tq.CRZ(has_params=True, trainable=True)
-
         # second pooling layer
         self.u3_24 = tq.U3(has_params=True, trainable=True)
-        self.u3_25 = tq.U3(has_params=True, trainable=True)
+        self.u3_25 = tq.U3(has_params=True, trainable=True)        
 
         #multilevel perceptron layer
         self.mlp_class = nn.Sequential(nn.Linear(6, 12), nn.Tanh(), nn.Linear(12, 1))
@@ -134,13 +107,13 @@ class QCNN(nn.Module):
         # STEP 1: add trainable gates for QCNN circuit
         
         # first convolutional layer
-        self.crx0(qdev, wires=[0, 1])
-        self.crx1(qdev, wires=[2, 3])
-        self.crx2(qdev, wires=[4, 5])
-        self.crx3(qdev, wires=[6, 7])
-        self.crx4(qdev, wires=[1, 2])
-        self.crx5(qdev, wires=[3, 4])
-        self.crx6(qdev, wires=[5, 6])
+        self.cr0(qdev, "CRX", 0, 1)
+        self.cr1(qdev, "CRX", 2, 3)
+        self.cr2(qdev, "CRX", 4, 5)
+        self.cr3(qdev, "CRX", 6, 7)
+        self.cr4(qdev, "CRX", 1, 2)
+        self.cr5(qdev, "CRX", 3, 4)
+        self.cr6(qdev, "CRX", 5, 6)
 
         # first pooling layer
         meas_qubits = [0,2,4,6]
@@ -152,9 +125,9 @@ class QCNN(nn.Module):
         self.u3_3(qdev, wires = 7)
 
         # second convolutional layer
-        self.crx7(qdev, wires=[1, 3])
-        self.crx8(qdev, wires=[5, 7])
-        self.crx9(qdev, wires=[3, 5])
+        self.cr7(qdev, "CRX", 1, 3)
+        self.cr8(qdev, "CRX", 5, 7)
+        self.cr9(qdev, "CRX", 3, 5)
 
         # second pooling layer
         meas_qubits = [1,5]
@@ -166,17 +139,16 @@ class QCNN(nn.Module):
         meas_qubits = [3,7]
         x = tqm.expval(qdev, meas_qubits, [self.meas_basis()] * len(meas_qubits))
 
-
         # SAME OPERATIONS BUT FOR THE OTHER FEATURE MAPS
 
         # first convolutional layer
-        self.crx10(qdev1, wires=[0, 1])
-        self.crx11(qdev1, wires=[2, 3])
-        self.crx12(qdev1, wires=[4, 5])
-        self.crx13(qdev1, wires=[6, 7])
-        self.crx14(qdev1, wires=[1, 2])
-        self.crx15(qdev1, wires=[3, 4])
-        self.crx16(qdev1, wires=[5, 6])
+        self.cr0(qdev1, "CRY", 0, 1)
+        self.cr1(qdev1, "CRY", 2, 3)
+        self.cr2(qdev1, "CRY", 4, 5)
+        self.cr3(qdev1, "CRY", 6, 7)
+        self.cr4(qdev1, "CRY", 1, 2)
+        self.cr5(qdev1, "CRY", 3, 4)
+        self.cr6(qdev1, "CRY", 5, 6)
 
         # first pooling layer
         meas_qubits = [0,2,4,6]
@@ -188,9 +160,9 @@ class QCNN(nn.Module):
         self.u3_13(qdev1, wires = 7)
 
         # second convolutional layer
-        self.crx17(qdev1, wires=[1, 3])
-        self.crx18(qdev1, wires=[5, 7])
-        self.crx19(qdev1, wires=[3, 5])
+        self.cr7(qdev1, "CRY", 1, 3)
+        self.cr8(qdev1, "CRY", 5, 7)
+        self.cr9(qdev1, "CRY", 3, 5)
 
         # second pooling layer
         meas_qubits = [1,5]
@@ -203,13 +175,13 @@ class QCNN(nn.Module):
         y = tqm.expval(qdev1, meas_qubits, [self.meas_basis()] * len(meas_qubits))
 
         # first convolutional layer
-        self.crx20(qdev2, wires=[0, 1])
-        self.crx21(qdev2, wires=[2, 3])
-        self.crx22(qdev2, wires=[4, 5])
-        self.crx23(qdev2, wires=[6, 7])
-        self.crx24(qdev2, wires=[1, 2])
-        self.crx25(qdev2, wires=[3, 4])
-        self.crx26(qdev2, wires=[5, 6])
+        self.cr0(qdev2, "CRZ", 0, 1)
+        self.cr1(qdev2, "CRZ", 2, 3)
+        self.cr2(qdev2, "CRZ", 4, 5)
+        self.cr3(qdev2, "CRZ", 6, 7)
+        self.cr4(qdev2, "CRZ", 1, 2)
+        self.cr5(qdev2, "CRZ", 3, 4)
+        self.cr6(qdev2, "CRZ", 5, 6)
 
         # first pooling layer
         meas_qubits = [0,2,4,6]
@@ -221,9 +193,9 @@ class QCNN(nn.Module):
         self.u3_23(qdev2, wires = 7)
 
         # second convolutional layer
-        self.crx27(qdev2, wires=[1, 3])
-        self.crx28(qdev2, wires=[5, 7])
-        self.crx29(qdev2, wires=[3, 5])
+        self.cr7(qdev2, "CRZ", 1, 3)
+        self.cr8(qdev2, "CRZ", 5, 7)
+        self.cr9(qdev2, "CRZ", 3, 5)
 
         # second pooling layer
         meas_qubits = [1,5]

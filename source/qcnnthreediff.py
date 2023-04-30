@@ -44,7 +44,7 @@ class QCNN(nn.Module):
         self.u3_4 = tq.U3(has_params=True, trainable=True)
         self.u3_5 = tq.U3(has_params=True, trainable=True)
 
-        # Second Layer
+        # Second Filter
         # first convolutional layer
         self.crx10 = tq.CRY(has_params=True, trainable=True)
         self.crx11 = tq.CRY(has_params=True, trainable=True)
