@@ -17,5 +17,5 @@ class SharedWeights(nn.Module):
         else:
             raise ValueError("Invalid gate type")
 
-        output = gate(input, wire1, wire2)
+        output = gate(input, wires = [wire1, wire2])
         return output
