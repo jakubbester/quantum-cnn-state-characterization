@@ -69,7 +69,7 @@ class QCNN(nn.Module):
         self.u3_25 = tq.U3(has_params=True, trainable=True)        
 
         #multilevel perceptron layer
-        self.mlp_class = nn.Sequential(nn.Linear(6, 12), nn.Tanh(), nn.Linear(12, 1))
+        self.mlp_class = nn.Sequential(nn.Linear(6, 15), nn.Tanh(), nn.Linear(15, 1))
 
     def forward(self, x):
         """x is a list with [theta, phi]"""
@@ -323,7 +323,7 @@ class MajoranaDataset(Dataset):
 
 # Testing and Training functions
     
-def train(trainloader, train_labels, epochs = 10, n_qubits = 8, n_cycles = 4, lr = 9e-3, device = 'cpu'):
+def train(trainloader, train_labels, epochs = 10, n_qubits = 8, n_cycles = 4, lr = 2e-3, device = 'cpu'):
     # calling model, loss, optimizer
     model = QCNN(n_qubits, n_cycles)
     lossfn = torch.nn.BCELoss()

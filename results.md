@@ -20,3 +20,8 @@
     - with three feature maps of different unitaries (CRX, CRY, CRZ) for convolutions with different weights that is inputted into a fully connected layer
    - *Training and testing summary*: 
     - training on 400, testing on 100; loss of 0.0004, very stable with fluctuations all between 0 and 0.01, very high accuracy of 0.96; optimizer learning rate of 9e-3
+5. **Quantum Hybrid Convolutional Neural Network v3**
+   - *Structure*:
+    - with three feature maps of different unitaries (CRX, CRY, CRZ) for convolutions with shared weights that is inputted into a fully connected layer, pooling layer does not use shared weight, changed mlp to 6 -> 15 -> 1, ran with different parameters to get optimal accuracy
+   - *Training and testing summary*: 
+    - training on 400, testing on 100; loss of 0.013, not as stable with fluctuations between 0 and 0.01, high accuracy of 0.79 to 0.84; optimizer learning rate of 2e-3 **Frank: I think we can do improvements for this, open to ideas for updates**
