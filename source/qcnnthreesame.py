@@ -23,13 +23,13 @@ class QCNN(nn.Module):
         self.meas_basis = tq.PauliZ
 
         # first convolutional layer
-        self.cr0 = sharedWeights(self.weights[0])
-        self.cr1 = sharedWeights(self.weights[1])
-        self.cr2 = sharedWeights(self.weights[2])
-        self.cr3 = sharedWeights(self.weights[3])
-        self.cr4 = sharedWeights(self.weights[4])
-        self.cr5 = sharedWeights(self.weights[5])
-        self.cr6 = sharedWeights(self.weights[6])
+        self.cr0 = SharedWeights(self.weights[0])
+        self.cr1 = SharedWeights(self.weights[1])
+        self.cr2 = SharedWeights(self.weights[2])
+        self.cr3 = SharedWeights(self.weights[3])
+        self.cr4 = SharedWeights(self.weights[4])
+        self.cr5 = SharedWeights(self.weights[5])
+        self.cr6 = SharedWeights(self.weights[6])
 
         # first pooling layer
         self.u3_0 = tq.U3(has_params=True, trainable=True)
@@ -38,9 +38,9 @@ class QCNN(nn.Module):
         self.u3_3 = tq.U3(has_params=True, trainable=True)
 
         # second convolutional layer
-        self.cr7 = sharedWeights(self.weights[7])
-        self.cr8 = sharedWeights(self.weights[8])
-        self.cr9 = sharedWeights(self.weights[9])
+        self.cr7 = SharedWeights(self.weights[7])
+        self.cr8 = SharedWeights(self.weights[8])
+        self.cr9 = SharedWeights(self.weights[9])
 
         # second pooling layer
         self.u3_4 = tq.U3(has_params=True, trainable=True)
