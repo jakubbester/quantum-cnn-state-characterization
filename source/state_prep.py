@@ -1,7 +1,10 @@
 # Preparing states to classify
 
+import torch
+import pickle
 import numpy as np
 import torchquantum.functional as tqf
+from torch.utils.data import Dataset, DataLoader
 
 class MajoranaCircuit:
     def __init__(self, n_qubits = 8, n_cycles = 4):
@@ -66,7 +69,7 @@ class InputDataset(Dataset):
             self.input = pickle.load(brick)
 
     def __len__(self):
-        return len(self.angles_array)
+        return len(self.input)
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
