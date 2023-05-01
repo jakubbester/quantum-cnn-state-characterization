@@ -13,10 +13,11 @@ import torchquantum.measurement as tqm
 from state_prep import prepare_majorana, topological_classifier
 
 class QCNN(nn.Module):
-    def __init__(self, n_qubits = 8, n_cycles = 4):
+    def __init__(self, circuit_builder, n_qubits = 8, n_cycles = 4):
         super().__init__()
         self.n_qubits = n_qubits
         self.n_cycles = n_cycles
+        self.circuit_builder = circuit_builder(n_qubits, n_cycles)
 
         self.meas_basis = tq.PauliZ
 
@@ -109,7 +110,7 @@ class QCNN(nn.Module):
         qdev = tq.QuantumDevice(n_wires=self.n_qubits, device = 'cpu')
 
         # prepare majorana circuit
-        qdev = prepare_majorana(qdev, self.n_qubits, self.n_cycles, theta, phi)
+        qdev = self.circuit_builder.generate_circuit(qdev, theta, phi)
 
         # STEP 1: add trainable gates for QCNN circuit
         
@@ -206,7 +207,7 @@ class QCNN(nn.Module):
         return x
     
 
-    def generate_data(self, n_points = 400, train_split = 0.7, save = True):
+    def generate_data(model, n_points = 400, train_split = 0.7, save = True):
         """ 
         Generate training and testing data.
             Args: 
@@ -227,7 +228,7 @@ class QCNN(nn.Module):
             x = [rng_theta, rng_phi]
 
             datapoints.append(x)
-            if QCNN.topological_classifier(rng_theta, rng_phi) == 1:
+            if model.circuit_builder.generate_label(rng_theta, rng_phi) == 1:
                 labels[i] = 1
             else:
                 labels[i] = 0
@@ -248,11 +249,11 @@ class QCNN(nn.Module):
                 pickle.dump(test_data, writer)
 
         # loading data
-        test_dataset = MajoranaDataset(fname='./data/test_data.pkl')
+        test_dataset = InputDataset(fname='./data/test_data.pkl')
         test_loader = DataLoader(test_dataset, batch_size=1,
                         shuffle=False, num_workers=0)
         
-        train_dataset = MajoranaDataset(fname='./data/train_data.pkl')
+        train_dataset = InputDataset(fname='./data/train_data.pkl')
         train_loader = DataLoader(train_dataset, batch_size=1,
                         shuffle=False, num_workers=0)
 
@@ -270,29 +271,7 @@ class QCNN(nn.Module):
                 score += 1
             count += 1
         return score/count
-    
-# # Custom dataset class for Majorana modes
-
-# class MajoranaDataset(Dataset):
-#     """Dataset of (non)topological Majorana states. 
-#     I need to make this in order to pass to Pytorch's `DataLoader` class.
-#     """
-
-#     def __init__(self, fname):
-#         """
-#         Arguments:
-#         """
-#         with open(fname, 'rb') as brick:
-#             self.angles_array = pickle.load(brick)
-
-#     def __len__(self):
-#         return len(self.angles_array)
-
-#     def __getitem__(self, idx):
-#         if torch.is_tensor(idx):
-#             idx = idx.tolist()
-#         sample = self.angles_array[idx]
-#         return sample
+   
 
 
 # Testing and Training functions
