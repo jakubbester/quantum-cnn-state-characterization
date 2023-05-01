@@ -19,3 +19,6 @@ acc: 0.75
 
 trainable two qubit SWAP gate 
 acc: 0.80
+
+qiskit 2- qubit unitary gate (convolution layer) 
+acc: 0.96
