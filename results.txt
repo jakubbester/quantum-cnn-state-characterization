@@ -1,5 +1,5 @@
 
-400 datapoints
+400 datapoints (70% train, 30% test)
 10 epochs
 
 
