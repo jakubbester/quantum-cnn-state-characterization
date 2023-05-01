@@ -11,7 +11,7 @@ import torchquantum as tq
 import torchquantum.functional as tqf
 import torchquantum.measurement as tqm
 import copy
-from shared import sharedWeights
+from shared import SharedWeights
 
 class QCNN(nn.Module):
     def __init__(self, n_qubits = 8, n_cycles = 4, weights = torch.randn(10)):
