@@ -12,7 +12,8 @@ import torchquantum.functional as tqf
 import torchquantum.measurement as tqm
 from source.state_prep import *
 
-class QCNN(nn.Module):
+# Two-Qubit Unitary of RZ, CNOT, and RY for convolution
+class QCNNZNOTY(nn.Module):
     # we added circuit_builder (which comes from state_prep.py file), this is the class that makes the input circuits that we want to extract information from (the Majorana circuits)
     def __init__(self, circuit_builder, n_qubits = 8, n_cycles = 4):
         super().__init__()
@@ -206,4 +207,34 @@ class QCNN(nn.Module):
         x = self.mlp_class(x)
         x = torch.sigmoid(x)
         return x
-    
+
+# Testing Classical Neural Network from simply measuring each qubit without quantum layers
+class QCNNClassical(nn.Module):
+    def __init__(self, circuit_builder, n_qubits = 8, n_cycles = 4):
+        super().__init__()
+        self.n_qubits = n_qubits
+        self.n_cycles = n_cycles
+        self.circuit_builder = circuit_builder(n_qubits, n_cycles)
+
+        self.meas_basis = tq.PauliZ
+
+        self.mlp_classical = nn.Sequential(nn.Linear(8,16), nn.Tanh(),nn.Linear(16,1))
+
+    def forward(self, x):
+        """x is a list with [theta, phi]"""
+        theta = x[0]
+        phi = x[1]
+
+        # create a quantum device to run the gates
+        qdev = tq.QuantumDevice(n_wires=self.n_qubits, device = 'cpu')
+
+        # prepare majorana circuit
+        qdev = self.circuit_builder.generate_circuit(qdev, theta, phi)
+
+        meas_qubits = [0,1,2,3,4,5,6,7]
+        x = tqm.expval(qdev, meas_qubits, [self.meas_basis()] * len(meas_qubits))
+
+        # classification
+        x = self.mlp_classical(x)
+        x = torch.sigmoid(x)
+        return x
