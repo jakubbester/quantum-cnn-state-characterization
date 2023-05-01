@@ -271,28 +271,28 @@ class QCNN(nn.Module):
             count += 1
         return score/count
     
-# Custom dataset class for Majorana modes
+# # Custom dataset class for Majorana modes
 
-class MajoranaDataset(Dataset):
-    """Dataset of (non)topological Majorana states. 
-    I need to make this in order to pass to Pytorch's `DataLoader` class.
-    """
+# class MajoranaDataset(Dataset):
+#     """Dataset of (non)topological Majorana states. 
+#     I need to make this in order to pass to Pytorch's `DataLoader` class.
+#     """
 
-    def __init__(self, fname):
-        """
-        Arguments:
-        """
-        with open(fname, 'rb') as brick:
-            self.angles_array = pickle.load(brick)
+#     def __init__(self, fname):
+#         """
+#         Arguments:
+#         """
+#         with open(fname, 'rb') as brick:
+#             self.angles_array = pickle.load(brick)
 
-    def __len__(self):
-        return len(self.angles_array)
+#     def __len__(self):
+#         return len(self.angles_array)
 
-    def __getitem__(self, idx):
-        if torch.is_tensor(idx):
-            idx = idx.tolist()
-        sample = self.angles_array[idx]
-        return sample
+#     def __getitem__(self, idx):
+#         if torch.is_tensor(idx):
+#             idx = idx.tolist()
+#         sample = self.angles_array[idx]
+#         return sample
 
 
 # Testing and Training functions
