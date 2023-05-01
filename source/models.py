@@ -831,7 +831,7 @@ class QCNNDiff(nn.Module):
 
 
 # QCNN with Feature Maps of CRX and the Unitarys CRZ,NOT,Y with different weights
-class QCNNZNOTY(nn.Module):
+class QCNNZNOTYDiff(nn.Module):
     # we added circuit_builder (which comes from state_prep.py file), this is the class that makes the input circuits that we want to extract information from (the Majorana circuits)
     def __init__(self, circuit_builder, n_qubits = 8, n_cycles = 4):
         super().__init__()
