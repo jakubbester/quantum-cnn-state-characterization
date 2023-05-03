@@ -26,7 +26,7 @@
    - *Training and testing summary*: 
     - training on 400, testing on 100; loss of 0.013, not as stable with fluctuations between 0 and 0.01, high accuracy of 0.79 to 0.84; optimizer learning rate of 2e-3 **Frank: I think we can do improvements for this, open to ideas for updates**
 
-Nikhil results:
+(Nikhil) results:
 400 datapoints (70% train, 30% test) 10 epochs
 
 trainable two qubit CZ gate, acc: 0.833
@@ -34,7 +34,7 @@ trainable two qubit CX gate, acc: 0.866
 trainable two qubit CY gate, acc: 0.9
 trainable two qubit CNOT gate, acc: 0.75
 trainable two qubit SWAP gate, acc: 0.80
-qiskit 2- qubit unitary gate (convolution layer) , acc: 0.96
+Qiskit 2- qubit unitary gate (convolution layer) , acc: 0.96
 
 **Important Summary Information!**
 
@@ -50,7 +50,7 @@ All QCNN Models (that we built)
 Added on the following modules and trained them! (Jakub Bester)
 
 - Quantum Residual Neural Network (QRNN)
-    - QRNN_Base - TODO
+    - QRNN_Base - TODO (working on getting this to work from within the quantum and classical part of the model)
 - Variational Quantum Convolutional Neural Network (VCNN)
     - VQCNN_Base - regular quantum convolutional (not really) neural network meant as a comparison (acc: 0.69 : 500 points, 0.8 train split, 10 epochs) (acc: 0.885 : 1000 points, 0.8 train split, 20 epochs)
     - VQCNN_Parameterized - Variational Quantum Convolutional (not really) Neural Network (VQCNN) (acc: 0.64 : 500 points, 0.8 train split, 10 epochs) (acc: 0.665: 1000 points, 0.8 train split, 20 epochs)
@@ -61,6 +61,6 @@ There is some notable difference to adding parameterization! We would have to mo
 qubit selection that it is using right now, but this is a good start. There is also a lot of variation in the accuracies I noticed.
 We can also try combining the different ones to see what happens, to generate a very comprehensive suite of things to test.
 - Quantum Graph Convolutional Neural Network (QGCNN)
-    - QGCNN_Base - Quantum Graph Convolutional Network (QGCN)
+    - QGCNN_Base - TODO (not sure if this is a good idea)
 
 Thoughts on paper : simply create a table of all possible combinations and run tests on them, and have different team members explain them accordingly
