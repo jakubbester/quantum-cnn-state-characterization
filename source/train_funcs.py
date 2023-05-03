@@ -6,7 +6,7 @@ import pickle
 from torch.utils.data import Dataset, DataLoader
 import torch.optim as optim
 from source.state_prep import InputDataset
-
+from tqdm.notebook import tqdm
 
 def generate_data(model, n_points = 400, train_split = 0.7, save = True):
     """ 
@@ -84,7 +84,7 @@ def train(model, trainloader, train_labels, epochs = 10, lr = 5e-3, device = 'cp
 
     # training loop
     preds = []
-    for epoch in range(epochs):
+    for epoch in tqdm(range(epochs)):
         for i, data in enumerate(trainloader):
             # loading data
             input = data #.to(device)
@@ -100,7 +100,12 @@ def train(model, trainloader, train_labels, epochs = 10, lr = 5e-3, device = 'cp
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            print(f"epoch: {epoch}, loss: {loss.item()}", end="\r")
+            
+        # print(f"epoch: {epoch}, loss: {loss.item()}", end="\r")
+
+        # changed to print each line
+        print("epoch: " + str(epoch) + ", loss: " + str(loss.item()))
+    
     return model, preds
 
 def test(model, testloader, test_labels):
