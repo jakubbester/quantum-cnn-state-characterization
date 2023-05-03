@@ -104,6 +104,7 @@ class QCNN_Base(nn.Module):
 
 # Two-Qubit Unitary of RZ, CNOT, and RY for convolution
 class QCNN_ZNOTY(nn.Module):
+    """ QCNN with Ioannis' general unitary"""
     # we added circuit_builder (which comes from state_prep.py file), this is the class that makes the input circuits that we want to extract information from (the Majorana circuits)
     def __init__(self, circuit_builder, n_qubits = 8, n_cycles = 4):
         super().__init__()
@@ -294,8 +295,9 @@ class QCNN_ZNOTY(nn.Module):
         x = torch.sigmoid(x)
         return x
 
-# Testing Classical Neural Network from simply measuring each qubit without quantum layers
-class QCNN_Classical(nn.Module):
+
+class Classical_NN(nn.Module):
+    """ Classical neural network with quantum meas as input"""
     def __init__(self, circuit_builder, n_qubits = 8, n_cycles = 4):
         super().__init__()
         self.n_qubits = n_qubits
@@ -327,6 +329,7 @@ class QCNN_Classical(nn.Module):
 
 # Testing Purely Quantum Neural Network with no fully connnected classical neural network layer
 class QCNN_Pure(nn.Module):
+    """ QCNN without fully connected layer at end"""
     def __init__(self, circuit_builder, n_qubits = 8, n_cycles = 4):
         super().__init__()
         self.n_qubits = n_qubits
@@ -424,10 +427,12 @@ class QCNN_Pure(nn.Module):
 
 # Three Feature Maps of CRX, CRY, CRZ for Convolutional Layers with Shared Weights
 class QCNN_Shared(nn.Module):
-    def __init__(self, circuit_builder, n_qubits = 8, n_cycles = 4):
+    """QCNN with MLP, 3 feature maps with shared weights"""
+    def __init__(self, circuit_builder, n_qubits = 8, n_cycles = 4, weights = torch.randn(10)):
         super().__init__()
         self.n_qubits = n_qubits
         self.n_cycles = n_cycles
+        self.weights = weights
         self.circuit_builder = circuit_builder(n_qubits, n_cycles)
 
         self.meas_basis = tq.PauliZ
@@ -606,6 +611,7 @@ class QCNN_Shared(nn.Module):
 
 # QCNN three feature maps CRX, CRY, CRZ with different weights
 class QCNN_Diff(nn.Module):
+    """QCNN with MLP, 3 feature maps with different weights"""
     def __init__(self, circuit_builder, n_qubits = 8, n_cycles = 4):
         super().__init__()
         self.n_qubits = n_qubits
@@ -816,6 +822,7 @@ class QCNN_Diff(nn.Module):
 
 # QCNN with Feature Maps of CRX and the Unitary CRZ, NOT, Y gates with different weights
 class QCNN_ZNOTY_Diff(nn.Module):
+    """"QCNN with MLP, 2 feature maps (1 w/ Ioannis' general unitary and 1 with CRX)"""
     # we added circuit_builder (which comes from state_prep.py file), this is the class that makes the input circuits that we want to extract information from (the Majorana circuits)
     def __init__(self, circuit_builder, n_qubits = 8, n_cycles = 4):
         super().__init__()
