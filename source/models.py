@@ -12,8 +12,7 @@ import torchquantum.functional as tqf
 import torchquantum.measurement as tqm
 from source.state_prep import *
 import copy
-from shared import SharedWeights
-
+from .shared import SharedWeights
 
 # QCNN Base Model
 class QCNNBase(nn.Module):
@@ -49,7 +48,7 @@ class QCNNBase(nn.Module):
         self.u3_4 = tq.U3(has_params=True, trainable=True)
         self.u3_5 = tq.U3(has_params=True, trainable=True)
 
-        #multilevel perceptron layer
+        # multilevel perceptron layer
         self.mlp_class = nn.Sequential(nn.Linear(2, 10), nn.Tanh(), nn.Linear(10, 1))
 
     def forward(self, x):
@@ -102,8 +101,6 @@ class QCNNBase(nn.Module):
         x = self.mlp_class(x)
         x = torch.sigmoid(x)
         return x
-
-
 
 # Two-Qubit Unitary of RZ, CNOT, and RY for convolution
 class QCNNZNOTY(nn.Module):
@@ -842,7 +839,6 @@ class QCNNZNOTYDiff(nn.Module):
         self.meas_basis = tq.PauliZ
 
         # first convolutional layer
-        
         self.rz1 = tq.RZ(has_params=True, trainable=True)
         self.rz2 = tq.RZ(has_params=True, trainable=True)
         self.rz3 = tq.RZ(has_params=True, trainable=True)
