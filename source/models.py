@@ -925,7 +925,7 @@ class QCNN_ZNOTY_Diff(nn.Module):
         self.u3_14 = tq.U3(has_params=True, trainable=True)
         self.u3_15 = tq.U3(has_params=True, trainable=True)
 
-        #multilevel perceptron layer
+        # multilevel perceptron layer
         self.mlp_class = nn.Sequential(nn.Linear(4, 16), nn.Tanh(), nn.Linear(16, 1))
 
     def forward(self, x):
@@ -1066,57 +1066,302 @@ class QCNN_ZNOTY_Diff(nn.Module):
         result = torch.sigmoid(result)
         return result
 
-class QRNN(nn.Module):
-    def __init__(self, circuit_builder, n_qubits = 8, n_cycles = 4):
+class QRNN_Base(nn.Module):
+    def __init__(self, circuit_builder, n_qubits=8, n_cycles=4):
         super().__init__()
-        self.n_qubits = n_qubits
-        self.n_cycles = n_cycles
+        
+        # setting some initial variables
+        self.n_qubits, self.n_cycles = n_qubits, n_cycles
         self.circuit_builder = circuit_builder(n_qubits, n_cycles)
+        self.meas_basis = tq.PauliZ # setting the measurement basis
 
-        # TODO: finsih the __init__ function
-    
+        # TODO: finish the __init__ function
+
+
     def forward(self, x):
-        """x is a list with [theta, phi]"""
-        theta, phi = x[0], x[1]
+        theta, phi = x[0], x[1] # x is the following list [theta, phi]
 
+        # creating a quantum device to run the gates on
         qdev = tq.QuantumDevice(self.n_qubits, device='cpu') # create quantum device
         qdev = self.circuit_builder.generate_circuit(qdev, theta, phi) # prepare majorana circuit
 
         # TODO : implement the forward function
 
 
-
         return x
 
-# sample code below
-
-# Testing Classical Neural Network from simply measuring each qubit without quantum layers
-class sample(nn.Module):
-    def __init__(self, circuit_builder, n_qubits = 8, n_cycles = 4):
+class VQCNN_Base(nn.Module):
+    def __init__(self, circuit_builder, n_qubits=8, n_cycles=4, trainable_params=10):
         super().__init__()
-        self.n_qubits = n_qubits
-        self.n_cycles = n_cycles
+        
+        # setting some initial variables
+        self.n_qubits, self.n_cycles = n_qubits, n_cycles
         self.circuit_builder = circuit_builder(n_qubits, n_cycles)
+        self.meas_basis = tq.PauliZ # setting the measurement basis
 
-        self.meas_basis = tq.PauliZ
+        # TODO: finish the __init__ function
 
-        self.mlp_classical = nn.Sequential(nn.Linear(8,16), nn.Tanh(),nn.Linear(16,1))
+        # creating trainable parameters for the variational QCNN
+        self.trainable_params = trainable_params
 
+        # setting up the quantum gates for the variational QCNN
+        self.gates = nn.ModuleList([
+            tq.CRX(has_params=True, trainable=True) for _ in range(trainable_params)
+        ])
+
+        # creating the classical MLP
+        self.mlp_class = nn.Sequential(
+            nn.Linear(2, 10),
+            nn.Tanh(),
+            nn.Linear(10, 1)
+        )
+    
     def forward(self, x):
-        """x is a list with [theta, phi]"""
-        theta = x[0]
-        phi = x[1]
+        theta, phi = x[0], x[1] # x is the following list [theta, phi]
 
-        # create a quantum device to run the gates
-        qdev = tq.QuantumDevice(n_wires=self.n_qubits, device = 'cpu')
+        # creating a quantum device to run the gates on
+        qdev = tq.QuantumDevice(self.n_qubits, device='cpu') # create quantum device
+        qdev = self.circuit_builder.generate_circuit(qdev, theta, phi) # prepare majorana circuit
 
-        # prepare majorana circuit
-        qdev = self.circuit_builder.generate_circuit(qdev, theta, phi)
+        # TODO : implement the forward function
 
-        meas_qubits = [0,1,2,3,4,5,6,7]
+        # add trainable gates for the QCNN circuit
+        for i in range(self.trainable_params):
+            self.gates[i](qdev, wires=[i % 8, (i + 1) % 8])
+
+        # perform measurement to get expectations (back to classical domain)
+        meas_qubits = [3, 7]
         x = tqm.expval(qdev, meas_qubits, [self.meas_basis()] * len(meas_qubits))
 
         # classification
-        x = self.mlp_classical(x)
+        x = self.mlp_class(x)
         x = torch.sigmoid(x)
+
+        return x
+
+class VQCNN_Parameterized(nn.Module):
+    def __init__(self, circuit_builder, n_qubits=8, n_cycles=4, trainable_params=10):
+        super().__init__()
+        
+        # setting some initial variables
+        self.n_qubits, self.n_cycles = n_qubits, n_cycles
+        self.circuit_builder = circuit_builder(n_qubits, n_cycles)
+        self.meas_basis = tq.PauliZ # setting the measurement basis
+
+        # TODO: finish the __init__ function
+
+        # creating trainable parameters for the variational QCNN
+        self.trainable_params = nn.ParameterList([
+            nn.Parameter(torch.randn(1, 4), requires_grad=True) for _ in range(trainable_params)
+        ])
+
+        # setting up the quantum gates for the variational QCNN
+        self.gates = nn.ModuleList([
+            tq.CRX(has_params=True, trainable=True) for _ in range(trainable_params)
+        ])
+
+        # creating the classical MLP
+        self.mlp_class = nn.Sequential(
+            nn.Linear(2, 10),
+            nn.Tanh(),
+            nn.Linear(10, 1)
+        )
+    
+    def forward(self, x):
+        theta, phi = x[0], x[1] # x is the following list [theta, phi]
+
+        # creating a quantum device to run the gates on
+        qdev = tq.QuantumDevice(self.n_qubits, device='cpu') # create quantum device
+        qdev = self.circuit_builder.generate_circuit(qdev, theta, phi) # prepare majorana circuit
+
+        # TODO : implement the forward function
+
+        # add trainable gates for the QCNN circuit
+        for i in range(len(self.trainable_params)):
+            self.gates[i](qdev, wires=[i % 8, (i + 1) % 8], params=self.trainable_params[i])
+
+        # perform measurement to get expectations (back to classical domain)
+        meas_qubits = [3, 7]
+        x = tqm.expval(qdev, meas_qubits, [self.meas_basis()] * len(meas_qubits))
+
+        # classification
+        x = self.mlp_class(x)
+        x = torch.sigmoid(x)
+
+        return x
+
+class VQCNN_Rotation_RY_Single(nn.Module):
+    def __init__(self, circuit_builder, n_qubits=8, n_cycles=4, trainable_params=10):
+        super().__init__()
+        
+        # setting some initial variables
+        self.n_qubits, self.n_cycles = n_qubits, n_cycles
+        self.circuit_builder = circuit_builder(n_qubits, n_cycles)
+        self.meas_basis = tq.PauliZ # setting the measurement basis
+
+        # TODO: finish the __init__ function
+
+        # creating trainable parameters for the variational QCNN
+        self.trainable_params = nn.ParameterList([
+            nn.Parameter(torch.randn(1, 4), requires_grad=True) for _ in range(trainable_params)
+        ])
+
+        # setting up the quantum gates for the variational QCNN
+        self.gates = nn.ModuleList([
+            tq.CRX(has_params=True, trainable=True) for _ in range(trainable_params)
+        ])
+
+        # creating the classical MLP
+        self.mlp_class = nn.Sequential(
+            nn.Linear(2, 10),
+            nn.Tanh(),
+            nn.Linear(10, 1)
+        )
+    
+    def forward(self, x):
+        theta, phi = x[0], x[1] # x is the following list [theta, phi]
+
+        # creating a quantum device to run the gates on
+        qdev = tq.QuantumDevice(self.n_qubits, device='cpu') # create quantum device
+        qdev = self.circuit_builder.generate_circuit(qdev, theta, phi) # prepare majorana circuit
+
+        # TODO : implement the forward function
+
+        # add trainable gates for the QCNN circuit
+        for i in range(len(self.trainable_params)):
+            self.gates[i](qdev, wires=[i % 8, (i + 1) % 8], params=self.trainable_params[i])
+
+        # perform measurement to get expectations (back to classical domain)
+        meas_qubits = [3, 7]
+        x = tqm.expval(qdev, meas_qubits, [self.meas_basis()] * len(meas_qubits))
+
+        # classification
+        x = self.mlp_class(x)
+        x = torch.sigmoid(x)
+
+        return x
+
+class VQCNN_Rotation_RY_On_Top(nn.Module):
+    def __init__(self, circuit_builder, n_qubits=8, n_cycles=4, trainable_params=10):
+        super().__init__()
+        
+        # setting some initial variables
+        self.n_qubits, self.n_cycles = n_qubits, n_cycles
+        self.circuit_builder = circuit_builder(n_qubits, n_cycles)
+        self.meas_basis = tq.PauliZ # setting the measurement basis
+
+        # TODO: finish the __init__ function
+
+        # creating trainable parameters for the variational QCNN
+        self.trainable_params = nn.ParameterList([
+            nn.Parameter(torch.randn(1, 4), requires_grad=True) for _ in range(trainable_params)
+        ])
+
+        # setting up the quantum gates for the variational QCNN
+        self.gates = nn.ModuleList([
+            tq.CRX(has_params=True, trainable=True) for _ in range(trainable_params)
+        ])
+
+        # creating the classical MLP
+        self.mlp_class = nn.Sequential(
+            nn.Linear(2, 10),
+            nn.Tanh(),
+            nn.Linear(10, 1)
+        )
+    
+    def forward(self, x):
+        theta, phi = x[0], x[1] # x is the following list [theta, phi]
+
+        # creating a quantum device to run the gates on
+        qdev = tq.QuantumDevice(self.n_qubits, device='cpu') # create quantum device
+        qdev = self.circuit_builder.generate_circuit(qdev, theta, phi) # prepare majorana circuit
+
+        # TODO : implement the forward function
+
+        # add trainable gates for the QCNN circuit
+        for i in range(len(self.trainable_params)):
+            self.gates[i](qdev, wires=[i % 8, (i + 1) % 8], params=self.trainable_params[i])
+
+        # perform measurement to get expectations (back to classical domain)
+        meas_qubits = [3, 7]
+        x = tqm.expval(qdev, meas_qubits, [self.meas_basis()] * len(meas_qubits))
+
+        # classification
+        x = self.mlp_class(x)
+        x = torch.sigmoid(x)
+
+        return x
+
+class VQCNN_Controlled(nn.Module):
+    def __init__(self, circuit_builder, n_qubits=8, n_cycles=4, trainable_params=10):
+        super().__init__()
+        
+        # setting some initial variables
+        self.n_qubits, self.n_cycles = n_qubits, n_cycles
+        self.circuit_builder = circuit_builder(n_qubits, n_cycles)
+        self.meas_basis = tq.PauliZ # setting the measurement basis
+
+        # TODO: finish the __init__ function
+
+        # creating trainable parameters for the variational QCNN
+        self.trainable_params = nn.ParameterList([
+            nn.Parameter(torch.randn(1, 4), requires_grad=True) for _ in range(trainable_params)
+        ])
+
+        # setting up the quantum gates for the variational QCNN
+        self.gates = nn.ModuleList([
+            tq.CRX(has_params=True, trainable=True) for _ in range(trainable_params)
+        ])
+
+        # creating the classical MLP
+        self.mlp_class = nn.Sequential(
+            nn.Linear(2, 10),
+            nn.Tanh(),
+            nn.Linear(10, 1)
+        )
+    
+    def forward(self, x):
+        theta, phi = x[0], x[1] # x is the following list [theta, phi]
+
+        # creating a quantum device to run the gates on
+        qdev = tq.QuantumDevice(self.n_qubits, device='cpu') # create quantum device
+        qdev = self.circuit_builder.generate_circuit(qdev, theta, phi) # prepare majorana circuit
+
+        # TODO : implement the forward function
+
+        # add trainable gates for the QCNN circuit
+        for i in range(len(self.trainable_params)):
+            self.gates[i](qdev, wires=[i % 8, (i + 1) % 8], params=self.trainable_params[i])
+
+        # perform measurement to get expectations (back to classical domain)
+        meas_qubits = [3, 7]
+        x = tqm.expval(qdev, meas_qubits, [self.meas_basis()] * len(meas_qubits))
+
+        # classification
+        x = self.mlp_class(x)
+        x = torch.sigmoid(x)
+
+        return x
+
+class QGCNN_Base(nn.Module):
+    def __init__(self, circuit_builder, n_qubits=8, n_cycles=4, trainable_params=10):
+        super().__init__()
+        
+        # setting some initial variables
+        self.n_qubits, self.n_cycles = n_qubits, n_cycles
+        self.circuit_builder = circuit_builder(n_qubits, n_cycles)
+        self.meas_basis = tq.PauliZ # setting the measurement basis
+
+        # TODO: finish the __init__ function
+
+    
+    def forward(self, x):
+        theta, phi = x[0], x[1] # x is the following list [theta, phi]
+
+        # creating a quantum device to run the gates on
+        qdev = tq.QuantumDevice(self.n_qubits, device='cpu') # create quantum device
+        qdev = self.circuit_builder.generate_circuit(qdev, theta, phi) # prepare majorana circuit
+
+        # TODO : implement the forward function
+
         return x

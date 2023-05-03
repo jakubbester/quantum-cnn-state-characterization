@@ -71,7 +71,7 @@ def get_accuracy(preds, labels, cutoff = 0.2):
         count += 1
     return score/count
 
-# Testing and Training functions
+# testing and training functions
 def train(model, trainloader, train_labels, epochs=10, lr=5e-3, device = 'cpu'):
     
     # calling model, loss, optimizer

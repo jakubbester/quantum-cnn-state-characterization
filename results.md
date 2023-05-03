@@ -36,6 +36,8 @@ trainable two qubit CNOT gate, acc: 0.75
 trainable two qubit SWAP gate, acc: 0.80
 qiskit 2- qubit unitary gate (convolution layer) , acc: 0.96
 
+**Important Summary Information!**
+
 All QCNN Models (that we built)
 - QCNN_Base - this is the base model/QCNN structure
 - QCNN_ZNOTY - two-qubit unitary of RZ, CNOT, and RY for convolution
@@ -47,6 +49,18 @@ All QCNN Models (that we built)
 
 Added on the following modules and trained them! (Jakub Bester)
 
-- QRNN_Base - Quantum Residual Neural Network (QRNN)
-- VQCNN_Base - Variational Quantum Convolutional Neural Network (VQCNN)
-- QGCNN_Base - Quantum Graph Convolutional Network (QGCN)
+- Quantum Residual Neural Network (QRNN)
+    - QRNN_Base - TODO
+- Variational Quantum Convolutional Neural Network (VCNN)
+    - VQCNN_Base - regular quantum convolutional (not really) neural network meant as a comparison (acc: 0.69 : 500 points, 0.8 train split, 10 epochs) (acc: 0.885 : 1000 points, 0.8 train split, 20 epochs)
+    - VQCNN_Parameterized - Variational Quantum Convolutional (not really) Neural Network (VQCNN) (acc: 0.64 : 500 points, 0.8 train split, 10 epochs) (acc: 0.665: 1000 points, 0.8 train split, 20 epochs)
+    - VQCNN_Rotation_RY_Single - uses solely rotation gates
+    - VQCNN_Rotation_RY_On_Top - uses rotation gates in order to pseudo-parameterize the quantum circuit
+    - VQCNN_Controlled - this uses controlled gates
+There is some notable difference to adding parameterization! We would have to modify the model to not use the trivial
+qubit selection that it is using right now, but this is a good start. There is also a lot of variation in the accuracies I noticed.
+We can also try combining the different ones to see what happens, to generate a very comprehensive suite of things to test.
+- Quantum Graph Convolutional Neural Network (QGCNN)
+    - QGCNN_Base - Quantum Graph Convolutional Network (QGCN)
+
+Thoughts on paper : simply create a table of all possible combinations and run tests on them, and have different team members explain them accordingly
