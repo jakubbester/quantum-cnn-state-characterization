@@ -29,23 +29,12 @@
 Nikhil results:
 400 datapoints (70% train, 30% test) 10 epochs
 
-trainable two qubit CZ gate 
-acc: 0.833
-
-trainable two qubit CX gate 
-acc: 0.866
-
-trainable two qubit CY gate 
-acc: 0.9
-
-trainable two qubit CNOT gate 
-acc: 0.75
-
-trainable two qubit SWAP gate 
-acc: 0.80
-
-qiskit 2- qubit unitary gate (convolution layer) 
-acc: 0.96
+trainable two qubit CZ gate, acc: 0.833
+trainable two qubit CX gate, acc: 0.866
+trainable two qubit CY gate, acc: 0.9
+trainable two qubit CNOT gate, acc: 0.75
+trainable two qubit SWAP gate, acc: 0.80
+qiskit 2- qubit unitary gate (convolution layer) , acc: 0.96
 
 All QCNN Models (that we built)
 - QCNN_Base - this is the base model/QCNN structure
@@ -56,11 +45,8 @@ All QCNN Models (that we built)
 - QCNN_Diff - three feature maps CRX, CRY, CRZ with different weights
 - QCNN_ZNOTY_Diff - feature maps of CRX and the unitary CRZ, NOT, Y with different weights
 
-- QRNN - 
-- VQCNN - 
-- QGCNN - 
-
 Added on the following modules and trained them! (Jakub Bester)
-- Quantum Residual Neural Network (QRNN)
-- Variational Quantum Convolutional Neural Network (VQCNN)
-- Quantum Graph Convolutional Network (QGCN)
+
+- QRNN_Base - Quantum Residual Neural Network (QRNN)
+- VQCNN_Base - Variational Quantum Convolutional Neural Network (VQCNN)
+- QGCNN_Base - Quantum Graph Convolutional Network (QGCN)

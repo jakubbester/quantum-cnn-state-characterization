@@ -1,5 +1,4 @@
-# QCNN source code
-
+# QCNN Source Code
 import numpy as np
 import torch
 import pickle
@@ -304,7 +303,7 @@ class QCNN_Classical(nn.Module):
 
         self.meas_basis = tq.PauliZ
 
-        self.mlp_classical = nn.Sequential(nn.Linear(8,16), nn.Tanh(),nn.Linear(16,1))
+        self.mlp_classical = nn.Sequential(nn.Linear(8, 16), nn.Tanh(),nn.Linear(16, 1))
 
     def forward(self, x):
         """x is a list with [theta, phi]"""
