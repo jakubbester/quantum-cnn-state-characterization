@@ -44,11 +44,9 @@ April 22nd: Reconvene and start putting together paper!
   - Try to find different trainable unitary gates
   - Try making all gates in same conv/pool layer the same
   
-Side things:  
+Side things:
 1. Running trained model on actual hardware (?!) - Nikhil
-
 2. Exploring QCAE (basically just adding circuit again but backwards lol) - Nikhil
-
 
 Action items:
   1. Calculating test and train error
