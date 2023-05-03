@@ -15,6 +15,7 @@ from .shared import SharedWeights
 
 # QCNN Base Model
 class QCNN_Base(nn.Module):
+    """This is the base implementation of our QCNN mode. It has log (N) convolution and pooling layers (for an N qubit system), and passes"""
     def __init__(self, circuit_builder, n_qubits = 8, n_cycles = 4):
         super().__init__()
         self.n_qubits = n_qubits
