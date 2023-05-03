@@ -15,7 +15,7 @@ import copy
 from .shared import SharedWeights
 
 # QCNN Base Model
-class QCNNBase(nn.Module):
+class QCNN_Base(nn.Module):
     def __init__(self, circuit_builder, n_qubits = 8, n_cycles = 4):
         super().__init__()
         self.n_qubits = n_qubits
@@ -103,7 +103,7 @@ class QCNNBase(nn.Module):
         return x
 
 # Two-Qubit Unitary of RZ, CNOT, and RY for convolution
-class QCNNZNOTY(nn.Module):
+class QCNN_ZNOTY(nn.Module):
     # we added circuit_builder (which comes from state_prep.py file), this is the class that makes the input circuits that we want to extract information from (the Majorana circuits)
     def __init__(self, circuit_builder, n_qubits = 8, n_cycles = 4):
         super().__init__()
@@ -114,7 +114,6 @@ class QCNNZNOTY(nn.Module):
         self.meas_basis = tq.PauliZ
 
         # first convolutional layer
-        
         self.rz1 = tq.RZ(has_params=True, trainable=True)
         self.rz2 = tq.RZ(has_params=True, trainable=True)
         self.rz3 = tq.RZ(has_params=True, trainable=True)
@@ -190,7 +189,7 @@ class QCNNZNOTY(nn.Module):
         self.u3_4 = tq.U3(has_params=True, trainable=True)
         self.u3_5 = tq.U3(has_params=True, trainable=True)
 
-        #multilevel perceptron layer
+        # multilevel perceptron layer
         self.mlp_class = nn.Sequential(nn.Linear(2, 10), nn.Tanh(), nn.Linear(10, 1))
 
     def forward(self, x):
@@ -207,7 +206,6 @@ class QCNNZNOTY(nn.Module):
         # STEP 1: add trainable gates for QCNN circuit
         
         # first convolutional layer
-       
         self.rz1(qdev, wires = 1)
         self.cnot1(qdev, wires = [1,0])
         self.rz2(qdev, wires = 0)
@@ -244,7 +242,6 @@ class QCNNZNOTY(nn.Module):
         self.cnot12(qdev, wires = [7,6])
         self.rz12(qdev, wires = 6)
 
-
         # first pooling layer
         meas_qubits = [0,2,4,6]
         _  = tqm.expval(qdev, meas_qubits, [self.meas_basis()] * len(meas_qubits))
@@ -255,7 +252,6 @@ class QCNNZNOTY(nn.Module):
         self.u3_3(qdev, wires = 7)
 
         # second convolutional layer
-        
         self.rz13(qdev, wires = 3)
         self.cnot13(qdev, wires = [3,1])
         self.rz14(qdev, wires = 1)
@@ -298,10 +294,8 @@ class QCNNZNOTY(nn.Module):
         x = torch.sigmoid(x)
         return x
 
-
-
 # Testing Classical Neural Network from simply measuring each qubit without quantum layers
-class QCNNClassical(nn.Module):
+class QCNN_Classical(nn.Module):
     def __init__(self, circuit_builder, n_qubits = 8, n_cycles = 4):
         super().__init__()
         self.n_qubits = n_qubits
@@ -330,11 +324,9 @@ class QCNNClassical(nn.Module):
         x = self.mlp_classical(x)
         x = torch.sigmoid(x)
         return x
-    
-
 
 # Testing Purely Quantum Neural Network with no fully connnected classical neural network layer
-class QCNNPure(nn.Module):
+class QCNN_Pure(nn.Module):
     def __init__(self, circuit_builder, n_qubits = 8, n_cycles = 4):
         super().__init__()
         self.n_qubits = n_qubits
@@ -429,11 +421,9 @@ class QCNNPure(nn.Module):
 
         # classification
         return torch.relu(x)
-    
-
 
 # Three Feature Maps of CRX, CRY, CRZ for Convolutional Layers with Shared Weights
-class QCNNShared(nn.Module):
+class QCNN_Shared(nn.Module):
     def __init__(self, circuit_builder, n_qubits = 8, n_cycles = 4):
         super().__init__()
         self.n_qubits = n_qubits
@@ -613,10 +603,9 @@ class QCNNShared(nn.Module):
         result = self.mlp_class(torch.cat((x,y,z), 1))
         result = torch.sigmoid(result)
         return result
-    
 
 # QCNN three feature maps CRX, CRY, CRZ with different weights
-class QCNNDiff(nn.Module):
+class QCNN_Diff(nn.Module):
     def __init__(self, circuit_builder, n_qubits = 8, n_cycles = 4):
         super().__init__()
         self.n_qubits = n_qubits
@@ -824,11 +813,9 @@ class QCNNDiff(nn.Module):
         result = self.mlp_class(torch.cat((x,y,z), 1))
         result = torch.sigmoid(result)
         return result
-    
 
-
-# QCNN with Feature Maps of CRX and the Unitarys CRZ,NOT,Y with different weights
-class QCNNZNOTYDiff(nn.Module):
+# QCNN with Feature Maps of CRX and the Unitary CRZ, NOT, Y gates with different weights
+class QCNN_ZNOTY_Diff(nn.Module):
     # we added circuit_builder (which comes from state_prep.py file), this is the class that makes the input circuits that we want to extract information from (the Majorana circuits)
     def __init__(self, circuit_builder, n_qubits = 8, n_cycles = 4):
         super().__init__()
@@ -956,8 +943,8 @@ class QCNNZNOTYDiff(nn.Module):
         qdev1 = copy.deepcopy(qdev)
 
         # STEP 1: add trainable gates for QCNN circuit
+        
         # first convolutional layer
-       
         self.rz1(qdev, wires = 1)
         self.cnot1(qdev, wires = [1,0])
         self.rz2(qdev, wires = 0)
@@ -994,7 +981,6 @@ class QCNNZNOTYDiff(nn.Module):
         self.cnot12(qdev, wires = [7,6])
         self.rz12(qdev, wires = 6)
 
-
         # first pooling layer
         meas_qubits = [0,2,4,6]
         _  = tqm.expval(qdev, meas_qubits, [self.meas_basis()] * len(meas_qubits))
@@ -1005,7 +991,6 @@ class QCNNZNOTYDiff(nn.Module):
         self.u3_3(qdev, wires = 7)
 
         # second convolutional layer
-        
         self.rz13(qdev, wires = 3)
         self.cnot13(qdev, wires = [3,1])
         self.rz14(qdev, wires = 1)
@@ -1081,3 +1066,58 @@ class QCNNZNOTYDiff(nn.Module):
         result = self.mlp_class(torch.cat((x,y), 1))
         result = torch.sigmoid(result)
         return result
+
+class QRNN(nn.Module):
+    def __init__(self, circuit_builder, n_qubits = 8, n_cycles = 4):
+        super().__init__()
+        self.n_qubits = n_qubits
+        self.n_cycles = n_cycles
+        self.circuit_builder = circuit_builder(n_qubits, n_cycles)
+
+        # TODO: finsih the __init__ function
+    
+    def forward(self, x):
+        """x is a list with [theta, phi]"""
+        theta, phi = x[0], x[1]
+
+        qdev = tq.QuantumDevice(self.n_qubits, device='cpu') # create quantum device
+        qdev = self.circuit_builder.generate_circuit(qdev, theta, phi) # prepare majorana circuit
+
+        # TODO : implement the forward function
+
+
+
+        return x
+
+# sample code below
+
+# Testing Classical Neural Network from simply measuring each qubit without quantum layers
+class sample(nn.Module):
+    def __init__(self, circuit_builder, n_qubits = 8, n_cycles = 4):
+        super().__init__()
+        self.n_qubits = n_qubits
+        self.n_cycles = n_cycles
+        self.circuit_builder = circuit_builder(n_qubits, n_cycles)
+
+        self.meas_basis = tq.PauliZ
+
+        self.mlp_classical = nn.Sequential(nn.Linear(8,16), nn.Tanh(),nn.Linear(16,1))
+
+    def forward(self, x):
+        """x is a list with [theta, phi]"""
+        theta = x[0]
+        phi = x[1]
+
+        # create a quantum device to run the gates
+        qdev = tq.QuantumDevice(n_wires=self.n_qubits, device = 'cpu')
+
+        # prepare majorana circuit
+        qdev = self.circuit_builder.generate_circuit(qdev, theta, phi)
+
+        meas_qubits = [0,1,2,3,4,5,6,7]
+        x = tqm.expval(qdev, meas_qubits, [self.meas_basis()] * len(meas_qubits))
+
+        # classification
+        x = self.mlp_classical(x)
+        x = torch.sigmoid(x)
+        return x

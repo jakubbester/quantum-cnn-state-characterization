@@ -28,7 +28,6 @@ April 22nd: Reconvene and start putting together paper!
 - Implement backpropogation
 - Implement skip connections
 
-
 ## Concrete project directions:
 1. Implementing multiple feature maps (shared weights) - Frank
   - Making all QCNN quantum gates non trainable as a baseline comparison (purely classical NN)

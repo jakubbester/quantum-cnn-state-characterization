@@ -8,7 +8,7 @@ import torch.optim as optim
 from source.state_prep import InputDataset
 from tqdm.notebook import tqdm
 
-def generate_data(model, n_points = 400, train_split = 0.7, save = True):
+def generate_data(model, n_points=200, train_split=0.7, save = True):
     """ 
     Generate training and testing data.
         Args: 
@@ -60,7 +60,6 @@ def generate_data(model, n_points = 400, train_split = 0.7, save = True):
 
     return train_loader, train_labels, test_loader, test_labels
 
-
 def get_accuracy(preds, labels, cutoff = 0.2):
     score = 0
     count = 0
@@ -71,12 +70,9 @@ def get_accuracy(preds, labels, cutoff = 0.2):
             score += 1
         count += 1
     return score/count
-   
-
 
 # Testing and Training functions
-    
-def train(model, trainloader, train_labels, epochs = 10, lr = 5e-3, device = 'cpu'):
+def train(model, trainloader, train_labels, epochs=10, lr=5e-3, device = 'cpu'):
     
     # calling model, loss, optimizer
     lossfn = torch.nn.BCELoss()
@@ -102,9 +98,7 @@ def train(model, trainloader, train_labels, epochs = 10, lr = 5e-3, device = 'cp
             optimizer.step()
             
         # print(f"epoch: {epoch}, loss: {loss.item()}", end="\r")
-
-        # changed to print each line
-        print("epoch: " + str(epoch) + ", loss: " + str(loss.item()))
+        print(f"epoch: {epoch}, loss: {loss.item()}") # changed to print each line
     
     return model, preds
 
