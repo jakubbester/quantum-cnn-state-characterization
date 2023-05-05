@@ -13,9 +13,161 @@ from source.state_prep import *
 import copy
 from .shared import SharedWeights
 
+##############################################
+## Naive Implementations (for benchmarking) ##
+##############################################
+
+class Classical_NN(nn.Module):
+    """ This is a naive classical NN implementation, 
+        where we instantly measure all of the qubits
+        of the input quantum state $\rho$ and feed
+        them into a MLP layer.
+    """
+    def __init__(self, circuit_builder, n_qubits = 8, n_cycles = 4):
+        super().__init__()
+        self.n_qubits = n_qubits
+        self.n_cycles = n_cycles
+        self.circuit_builder = circuit_builder(n_qubits, n_cycles)
+
+        self.meas_basis = tq.PauliZ
+
+        self.mlp_classical = nn.Sequential(nn.Linear(n_qubits, n_qubits*2), nn.Tanh(),nn.Linear(n_qubits*2, 1))
+
+    def forward(self, x):
+        """x is a list with [theta, phi]"""
+        theta = x[0]
+        phi = x[1]
+
+        # create a quantum device to run the gates
+        qdev = tq.QuantumDevice(n_wires=self.n_qubits, device = 'cpu')
+
+        # prepare majorana circuit
+        qdev = self.circuit_builder.generate_circuit(qdev, theta, phi)
+
+        meas_qubits = range(n_qubits)
+        x = tqm.expval(qdev, meas_qubits, [self.meas_basis()] * len(meas_qubits))
+
+        # classification
+        x = self.mlp_classical(x)
+        x = torch.sigmoid(x)
+        return x
+
+class QCNN_Pure(nn.Module):
+    """ This is a naive purely quantum 
+        implementation, where we implement
+        only the QCNN without the fully 
+        connected MLP layer.
+    """
+    def __init__(self, circuit_builder, n_qubits = 8, n_cycles = 4):
+        super().__init__()
+        self.n_qubits = n_qubits
+        self.n_cycles = n_cycles
+        self.circuit_builder = circuit_builder(n_qubits, n_cycles)
+
+        self.meas_basis = tq.PauliZ
+
+        # first convolutional layer
+        self.crx0 = tq.CRX(has_params=True, trainable=True)
+        self.crx1 = tq.CRX(has_params=True, trainable=True)
+        self.crx2 = tq.CRX(has_params=True, trainable=True)
+        self.crx3 = tq.CRX(has_params=True, trainable=True)
+        self.crx4 = tq.CRX(has_params=True, trainable=True)
+        self.crx5 = tq.CRX(has_params=True, trainable=True)
+        self.crx6 = tq.CRX(has_params=True, trainable=True)
+
+        # first pooling layer
+        self.u3_0 = tq.U3(has_params=True, trainable=True)
+        self.u3_1 = tq.U3(has_params=True, trainable=True)
+        self.u3_2 = tq.U3(has_params=True, trainable=True)
+        self.u3_3 = tq.U3(has_params=True, trainable=True)
+
+        # second convolutional layer
+        self.crx7 = tq.CRX(has_params=True, trainable=True)
+        self.crx8 = tq.CRX(has_params=True, trainable=True)
+        self.crx9 = tq.CRX(has_params=True, trainable=True)
+
+        # second pooling layer
+        self.u3_4 = tq.U3(has_params=True, trainable=True)
+        self.u3_5 = tq.U3(has_params=True, trainable=True)
+
+        # third convolutional layer
+        self.crx10 = tq.CRX(has_params=True, trainable=True)
+
+        # third pooling layer
+        self.u3_6 = tq.U3(has_params=True, trainable=True)
+
+    def forward(self, x):
+        """x is a list with [theta, phi]"""
+        theta = x[0]
+        phi = x[1]
+
+        # create a quantum device to run the gates
+        qdev = tq.QuantumDevice(n_wires=self.n_qubits, device = 'cpu')
+
+        # prepare majorana circuit
+        qdev = self.circuit_builder.generate_circuit(qdev, theta, phi)
+
+        # STEP 1: add trainable gates for QCNN circuit
+        
+        # first convolutional layer
+        self.crx0(qdev, wires=[0, 1])
+        self.crx1(qdev, wires=[2, 3])
+        self.crx2(qdev, wires=[4, 5])
+        self.crx3(qdev, wires=[6, 7])
+        self.crx4(qdev, wires=[1, 2])
+        self.crx5(qdev, wires=[3, 4])
+        self.crx6(qdev, wires=[5, 6])
+
+        # first pooling layer
+        meas_qubits = [0,2,4,6]
+        _  = tqm.expval(qdev, meas_qubits, [self.meas_basis()] * len(meas_qubits))
+
+        self.u3_0(qdev, wires = 1)
+        self.u3_1(qdev, wires = 3)
+        self.u3_2(qdev, wires = 5)
+        self.u3_3(qdev, wires = 7)
+
+        # second convolutional layer
+        self.crx7(qdev, wires=[1, 3])
+        self.crx8(qdev, wires=[5, 7])
+        self.crx9(qdev, wires=[3, 5])
+
+        # second pooling layer
+        meas_qubits = [1,5]
+        _ = tqm.expval(qdev, meas_qubits, [self.meas_basis()] * len(meas_qubits))
+        self.u3_4(qdev, wires = 3)
+        self.u3_5(qdev, wires = 7)
+
+        # third convolutional layer
+        self.crx10(qdev, wires = [3,7])
+
+        # third pooling layer
+        meas_qubits = [3]
+        _ = tqm.expval(qdev, meas_qubits, [self.meas_basis()] * len(meas_qubits))
+        self.u3_6(qdev, wires = 7)
+
+        # perform measurement to get expectations (back to classical domain)
+        meas_qubits = [7]
+        x = tqm.expval(qdev, meas_qubits, [self.meas_basis()] * len(meas_qubits))
+
+        # classification
+        return torch.relu(x)
+    
+#############################
+## Base Model + Variations ##
+##     (1 feature map)     ##
+#############################
+
 # QCNN Base Model
 class QCNN_Base(nn.Module):
-    """This is the base implementation of our QCNN mode. It has log (N) convolution and pooling layers (for an N qubit system), and passes"""
+    """ This is the base implementation of our QCNN model. 
+        It has log (N) convolution layers and log(N) 
+        pooling layers (for an N qubit system), and after 
+        applying the layers, passes the output to a fully 
+        connected MLP network, which outputs a binary 
+        classification value y $\in$ [0,1].
+    """
+    
     def __init__(self, circuit_builder, n_qubits = 8, n_cycles = 4):
         super().__init__()
         self.n_qubits = n_qubits
@@ -102,9 +254,15 @@ class QCNN_Base(nn.Module):
         x = torch.sigmoid(x)
         return x
 
+
 # Two-Qubit Unitary of RZ, CNOT, and RY for convolution
 class QCNN_ZNOTY(nn.Module):
-    """ QCNN with Ioannis' general unitary"""
+    """ This is a variation of the QCNN_BASE class, 
+        where the only change is that we implement 
+        a more general unitary in place of CRX in 
+        the convolution layer.
+    """
+    
     # we added circuit_builder (which comes from state_prep.py file), this is the class that makes the input circuits that we want to extract information from (the Majorana circuits)
     def __init__(self, circuit_builder, n_qubits = 8, n_cycles = 4):
         super().__init__()
@@ -294,140 +452,22 @@ class QCNN_ZNOTY(nn.Module):
         x = self.mlp_class(x)
         x = torch.sigmoid(x)
         return x
-
-
-class Classical_NN(nn.Module):
-    """ Classical neural network with quantum meas as input"""
-    def __init__(self, circuit_builder, n_qubits = 8, n_cycles = 4):
-        super().__init__()
-        self.n_qubits = n_qubits
-        self.n_cycles = n_cycles
-        self.circuit_builder = circuit_builder(n_qubits, n_cycles)
-
-        self.meas_basis = tq.PauliZ
-
-        self.mlp_classical = nn.Sequential(nn.Linear(8, 16), nn.Tanh(),nn.Linear(16, 1))
-
-    def forward(self, x):
-        """x is a list with [theta, phi]"""
-        theta = x[0]
-        phi = x[1]
-
-        # create a quantum device to run the gates
-        qdev = tq.QuantumDevice(n_wires=self.n_qubits, device = 'cpu')
-
-        # prepare majorana circuit
-        qdev = self.circuit_builder.generate_circuit(qdev, theta, phi)
-
-        meas_qubits = [0,1,2,3,4,5,6,7]
-        x = tqm.expval(qdev, meas_qubits, [self.meas_basis()] * len(meas_qubits))
-
-        # classification
-        x = self.mlp_classical(x)
-        x = torch.sigmoid(x)
-        return x
-
-# Testing Purely Quantum Neural Network with no fully connnected classical neural network layer
-class QCNN_Pure(nn.Module):
-    """ QCNN without fully connected layer at end"""
-    def __init__(self, circuit_builder, n_qubits = 8, n_cycles = 4):
-        super().__init__()
-        self.n_qubits = n_qubits
-        self.n_cycles = n_cycles
-        self.circuit_builder = circuit_builder(n_qubits, n_cycles)
-
-        self.meas_basis = tq.PauliZ
-
-        # first convolutional layer
-        self.crx0 = tq.CRX(has_params=True, trainable=True)
-        self.crx1 = tq.CRX(has_params=True, trainable=True)
-        self.crx2 = tq.CRX(has_params=True, trainable=True)
-        self.crx3 = tq.CRX(has_params=True, trainable=True)
-        self.crx4 = tq.CRX(has_params=True, trainable=True)
-        self.crx5 = tq.CRX(has_params=True, trainable=True)
-        self.crx6 = tq.CRX(has_params=True, trainable=True)
-
-        # first pooling layer
-        self.u3_0 = tq.U3(has_params=True, trainable=True)
-        self.u3_1 = tq.U3(has_params=True, trainable=True)
-        self.u3_2 = tq.U3(has_params=True, trainable=True)
-        self.u3_3 = tq.U3(has_params=True, trainable=True)
-
-        # second convolutional layer
-        self.crx7 = tq.CRX(has_params=True, trainable=True)
-        self.crx8 = tq.CRX(has_params=True, trainable=True)
-        self.crx9 = tq.CRX(has_params=True, trainable=True)
-
-        # second pooling layer
-        self.u3_4 = tq.U3(has_params=True, trainable=True)
-        self.u3_5 = tq.U3(has_params=True, trainable=True)
-
-        # third convolutional layer
-        self.crx10 = tq.CRX(has_params=True, trainable=True)
-
-        # third pooling layer
-        self.u3_6 = tq.U3(has_params=True, trainable=True)
-
-    def forward(self, x):
-        """x is a list with [theta, phi]"""
-        theta = x[0]
-        phi = x[1]
-
-        # create a quantum device to run the gates
-        qdev = tq.QuantumDevice(n_wires=self.n_qubits, device = 'cpu')
-
-        # prepare majorana circuit
-        qdev = self.circuit_builder.generate_circuit(qdev, theta, phi)
-
-        # STEP 1: add trainable gates for QCNN circuit
-        
-        # first convolutional layer
-        self.crx0(qdev, wires=[0, 1])
-        self.crx1(qdev, wires=[2, 3])
-        self.crx2(qdev, wires=[4, 5])
-        self.crx3(qdev, wires=[6, 7])
-        self.crx4(qdev, wires=[1, 2])
-        self.crx5(qdev, wires=[3, 4])
-        self.crx6(qdev, wires=[5, 6])
-
-        # first pooling layer
-        meas_qubits = [0,2,4,6]
-        _  = tqm.expval(qdev, meas_qubits, [self.meas_basis()] * len(meas_qubits))
-
-        self.u3_0(qdev, wires = 1)
-        self.u3_1(qdev, wires = 3)
-        self.u3_2(qdev, wires = 5)
-        self.u3_3(qdev, wires = 7)
-
-        # second convolutional layer
-        self.crx7(qdev, wires=[1, 3])
-        self.crx8(qdev, wires=[5, 7])
-        self.crx9(qdev, wires=[3, 5])
-
-        # second pooling layer
-        meas_qubits = [1,5]
-        _ = tqm.expval(qdev, meas_qubits, [self.meas_basis()] * len(meas_qubits))
-        self.u3_4(qdev, wires = 3)
-        self.u3_5(qdev, wires = 7)
-
-        # third convolutional layer
-        self.crx10(qdev, wires = [3,7])
-
-        # third pooling layer
-        meas_qubits = [3]
-        _ = tqm.expval(qdev, meas_qubits, [self.meas_basis()] * len(meas_qubits))
-        self.u3_6(qdev, wires = 7)
-
-        # perform measurement to get expectations (back to classical domain)
-        meas_qubits = [7]
-        x = tqm.expval(qdev, meas_qubits, [self.meas_basis()] * len(meas_qubits))
-
-        # classification
-        return torch.relu(x)
+    
+#############################
+## Base Model + Variations ##
+##     (n feature maps)    ##
+#############################
 
 # Three Feature Maps of CRX, CRY, CRZ for Convolutional Layers with Shared Weights
 class QCNN_Shared(nn.Module):
-    """QCNN with MLP, 3 feature maps with shared weights"""
+    """ This is a variation of QCNN_BASE where
+        we implement 3 feature maps for the first 
+        convolutional layer, each with a different
+        unitary (CRX, CRY, CRZ). We feed the
+        measurement results into a fully connected
+        MLP at the end. All of the feature maps
+        have shared weights.
+    """
     def __init__(self, circuit_builder, n_qubits = 8, n_cycles = 4, weights = torch.randn(10)):
         super().__init__()
         self.n_qubits = n_qubits
@@ -611,7 +651,14 @@ class QCNN_Shared(nn.Module):
 
 # QCNN three feature maps CRX, CRY, CRZ with different weights
 class QCNN_Diff(nn.Module):
-    """QCNN with MLP, 3 feature maps with different weights"""
+    """ This is a variation of QCNN_BASE where
+        we implement 3 feature maps for the first 
+        convolutional layer, each with a different
+        unitary (CRX, CRY, CRZ). We feed the
+        measurement results into a fully connected
+        MLP at the end. All of the feature maps
+        have unique weights.
+    """
     def __init__(self, circuit_builder, n_qubits = 8, n_cycles = 4):
         super().__init__()
         self.n_qubits = n_qubits
@@ -822,7 +869,14 @@ class QCNN_Diff(nn.Module):
 
 # QCNN with Feature Maps of CRX and the Unitary CRZ, NOT, Y gates with different weights
 class QCNN_ZNOTY_Diff(nn.Module):
-    """"QCNN with MLP, 2 feature maps (1 w/ Ioannis' general unitary and 1 with CRX)"""
+    """ This is a variation of QCNN_BASE where
+        we implement 2 feature maps for the first 
+        convolutional layer, each with a different
+        unitary (general ZNOTY, CRX). We feed the
+        measurement results into a fully connected
+        MLP at the end. The feature maps have
+        unique weights.
+    """
     # we added circuit_builder (which comes from state_prep.py file), this is the class that makes the input circuits that we want to extract information from (the Majorana circuits)
     def __init__(self, circuit_builder, n_qubits = 8, n_cycles = 4):
         super().__init__()
@@ -1073,8 +1127,16 @@ class QCNN_ZNOTY_Diff(nn.Module):
         result = self.mlp_class(torch.cat((x,y), 1))
         result = torch.sigmoid(result)
         return result
+    
+
+#######################
+## UNDER DEVELOPMENT ##
+#######################
 
 class QRNN_Base(nn.Module):
+    """ 
+
+    """
     def __init__(self, circuit_builder, n_qubits=8, n_cycles=4):
         super().__init__()
         
