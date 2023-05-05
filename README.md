@@ -4,7 +4,7 @@ Final project for CPSC 452/552 Spring 2023.
 Jakub Bester, Nikhil Harle, Frank Li, Ioannis Panitsas, Connor Totilas
 
 ## Introduction
-We implement a **Q**uantum **C**onvolutional **N**eural **N**etwork (QCNN) and variations using the `torchquantum` package, following [Cong *et al.* 2019](https://www.nature.com/articles/s41567-019-0648-8/).
+We implement a **Q**uantum **C**onvolutional **N**eural **N**etwork (QCNN) and variations using the `torchquantum` package, following the work of [Cong *et al.* (2019)](https://www.nature.com/articles/s41567-019-0648-8/) to distinguish whether an input state is a simulation of a topological Floquet Majorana mode, using code from the work of [Harle *et al.* (2023)](https://www.nature.com/articles/s41467-023-37725-0). The QCNN works as a binary classifier.
 
 FINISH THIS
 
