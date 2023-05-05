@@ -4,7 +4,7 @@ Final project for CPSC 452/552 Spring 2023.
 Jakub Bester, Nikhil Harle, Frank Li, Ioannis Panitsas, Connor Totilas
 
 ## Introduction
-DO THIS
+We implement a **Q**uantum **C**convolutional **N**eural **N**network (QCNN) and variations using the `torchquantum` package, following [Cong *et al.* 2019](https://www.nature.com/articles/s41567-019-0648-8/)
 
 ## Code Summary
 You can train any of the QCNN models/variations in the `qcnn_training.ipynb` notebook, where the training process is nicely explained.
