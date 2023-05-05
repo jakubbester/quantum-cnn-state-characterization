@@ -96,11 +96,9 @@ def train(model, trainloader, train_labels, epochs=10, lr=5e-3, device = 'cpu'):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            
-        # print(f"epoch: {epoch}, loss: {loss.item()}", end="\r")
-        print(f"epoch: {epoch}, loss: {loss.item()}") # changed to print each line
-    
-    return model, preds
+            print(f"epoch: {epoch}, loss: {loss.item()}", end="\r")
+    accuracy = get_accuracy(preds, train_labels)
+    return model, preds, accuracy
 
 def test(model, testloader, test_labels):
     model.eval()
