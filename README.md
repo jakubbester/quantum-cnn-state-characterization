@@ -27,7 +27,7 @@ Contains various utility functions.
   - Find Qiskit circuit that prepares the state and add code to Github in the form of a function like QCNN.prepare_majorana()
   - Ideas: AKLT, cluster state with excitation, whatever we want!
 
-3. Rewrite models.py 
+3. Rewrite models.py **Jakub**
   - make it so that we're not initializing all trainable gates separately
   - generalize to *n* qubits instead of just 8
 
