@@ -251,7 +251,7 @@ class QCNN_Base(nn.Module):
 
 
 # Two-Qubit Unitary of RZ, CNOT, and RY for convolution
-class QCNN_ZNOTY(nn.Module):
+class QCNN_ZNOTY_OLD(nn.Module):
     """ This is a variation of the QCNN_BASE class, 
         where the only change is that we implement 
         a more general unitary in place of CRX in 
@@ -358,41 +358,41 @@ class QCNN_ZNOTY(nn.Module):
         # STEP 1: add trainable gates for QCNN circuit
         
         # first convolutional layer
-        self.rz1(qdev, wires = 1)
+        tqf.rz(qdev, wires = 1, params = -np.pi/2) #self.rz1(qdev, wires = 1)
         self.cnot1(qdev, wires = [1,0])
         self.rz2(qdev, wires = 0)
         self.ry1(qdev, wires = 1)
         self.cnot2(qdev, wires = [0,1])
         self.ry2(qdev, wires = 1)
         self.cnot3(qdev, wires = [1,0])
-        self.rz3(qdev, wires = 0)
+        tqf.rz(qdev, wires = 0, params = np.pi/2) #self.rz3(qdev, wires = 0)
 
-        self.rz4(qdev, wires = 3)
+        tqf.rz(qdev, wires = 3, params = -np.pi/2) #self.rz4(qdev, wires = 3)
         self.cnot4(qdev, wires = [3,2])
         self.rz5(qdev, wires = 2)
         self.ry3(qdev, wires = 3)
         self.cnot5(qdev, wires = [2,3])
         self.ry4(qdev, wires = 3)
         self.cnot6(qdev, wires = [3,2])
-        self.rz6(qdev, wires = 2)
+        tqf.rz(qdev, wires = 2, params = np.pi/2) #self.rz6(qdev, wires = 2)
 
-        self.rz7(qdev, wires = 5)
+        tqf.rz(qdev, wires = 5, params = -np.pi/2) #self.rz7(qdev, wires = 5)
         self.cnot7(qdev, wires = [5,4])
         self.rz8(qdev, wires = 4)
         self.ry5(qdev, wires = 5)
         self.cnot8(qdev, wires = [4,5])
         self.ry6(qdev, wires = 5)
         self.cnot9(qdev, wires = [5,4])
-        self.rz9(qdev, wires = 4)
+        tqf.rz(qdev, wires = 4, params = np.pi/2) #self.rz9(qdev, wires = 4)
 
-        self.rz10(qdev, wires = 7)
+        tqf.rz(qdev, wires = 7, params = -np.pi/2) # self.rz10(qdev, wires = 7)
         self.cnot10(qdev, wires = [7,6])
         self.rz11(qdev, wires = 6)
         self.ry7(qdev, wires = 7)
         self.cnot11(qdev, wires = [6,7])
         self.ry8(qdev, wires = 7)
         self.cnot12(qdev, wires = [7,6])
-        self.rz12(qdev, wires = 6)
+        tqf.rz(qdev, wires = 6, params = np.pi/2) #self.rz12(qdev, wires = 6)
 
         # first pooling layer
         meas_qubits = [0,2,4,6]
@@ -404,32 +404,32 @@ class QCNN_ZNOTY(nn.Module):
         self.u3_3(qdev, wires = 7)
 
         # second convolutional layer
-        self.rz13(qdev, wires = 3)
+        tqf.rz(qdev, wires = 3, params = -np.pi/2) #self.rz13(qdev, wires = 3)
         self.cnot13(qdev, wires = [3,1])
         self.rz14(qdev, wires = 1)
         self.ry9(qdev, wires = 3)
         self.cnot14(qdev, wires = [1,3])
         self.ry10(qdev, wires = 3)
         self.cnot15(qdev, wires = [3,1])
-        self.rz15(qdev, wires = 1)
+        tqf.rz(qdev, wires = 1, params = np.pi/2) #self.rz15(qdev, wires = 1)
 
-        self.rz16(qdev, wires = 7)
+        tqf.rz(qdev, wires = 7, params = -np.pi/2) #self.rz16(qdev, wires = 7)
         self.cnot16(qdev, wires = [7,5])
         self.rz17(qdev, wires = 5)
         self.ry11(qdev, wires = 7)
         self.cnot17(qdev, wires = [5,7])
         self.ry12(qdev, wires = 7)
         self.cnot18(qdev, wires = [7,5])
-        self.rz18(qdev, wires = 5)
+        tqf.rz(qdev, wires = 1, params = np.pi/2) #self.rz18(qdev, wires = 5)
 
-        self.rz19(qdev, wires = 5)
+        tqf.rz(qdev, wires = 5, params = -np.pi/2) #self.rz19(qdev, wires = 5)
         self.cnot19(qdev, wires = [5,3])
         self.rz20(qdev, wires = 3)
         self.ry13(qdev, wires = 5)
         self.cnot20(qdev, wires = [3,5])
         self.ry14(qdev, wires = 5)
         self.cnot21(qdev, wires = [5,3])
-        self.rz21(qdev, wires = 3)
+        tqf.rz(qdev, wires = 3, params = np.pi/2) #self.rz21(qdev, wires = 3)
 
         # second pooling layer
         meas_qubits = [1,5]
@@ -446,13 +446,275 @@ class QCNN_ZNOTY(nn.Module):
         x = torch.sigmoid(x)
         return x
     
+class QCNN_ZNOTY(nn.Module):
+    """ This is a variation of the QCNN_BASE class, 
+        where the only change is that we implement 
+        a more general unitary in place of CRX in 
+        the convolution layer.
+    """
+    def __init__(self,circuit_builder, n_qubits = 8, n_cycles = 4):
+        super().__init__()
+        self.n_qubits = n_qubits
+        self.n_cycles = n_cycles
+        self.circuit_builder = circuit_builder(n_qubits, n_cycles)
+        
+        self.n_layers = int(np.log(self.n_qubits)/np.log(2) - 1)
+        self.meas_basis = tq.PauliZ
+
+        # initialize convolutional gates
+        self.conv_rz = nn.ModuleList([
+            tq.RZ(has_params=True, trainable=True) for _ in range(12)
+        ])
+        self.conv_ry = nn.ModuleList([
+            tq.RY(has_params=True, trainable=True) for _ in range(12)
+        ])
+        self.conv_ry2 = nn.ModuleList([
+            tq.RY(has_params=True, trainable=True) for _ in range(12)
+        ])
+
+        # initialize pooling gates
+        self.pool_gates = nn.ModuleList([
+            tq.U3(has_params=True, trainable=True) for _ in range(6)
+        ])
+
+        # initialize multilevel perceptron layer
+        self.mlp_class = nn.Sequential(nn.Linear(2, 10), nn.Tanh(), nn.Linear(10, 1))
+
+    def forward(self, x):
+        """x is input"""
+
+        # create a quantum device to run the gates
+        qdev = tq.QuantumDevice(n_wires=self.n_qubits, device = 'cpu')
+
+        # prepare majorana circuit
+        qdev = self.circuit_builder.generate_circuit(qdev, x)
+
+        # apply log_2(n_qubits) - 1 layers of conv/pooling gates
+        active_qubits = range(self.n_qubits)
+        conv_count = 0
+        pool_count = 0
+        for layer in range(self.n_layers):
+
+            # apply convolution gates
+            for i, qubit in enumerate(active_qubits):
+                if i % 2 == 0 and i < len(active_qubits)-1:
+                    tqf.rz(qdev, wires = active_qubits[i+1], params = -np.pi/2)
+                    tqf.cx(qdev, wires = [active_qubits[i+1], qubit])
+                    self.conv_rz[conv_count](qdev, wires = qubit)
+                    self.conv_ry[conv_count](qdev, wires = active_qubits[i+1])
+                    tqf.cx(qdev, wires = [qubit, active_qubits[i+1]])
+                    self.conv_ry2[conv_count](qdev, wires = active_qubits[i+1])
+                    tqf.cx(qdev, wires = [active_qubits[i+1], qubit])
+                    tqf.rz(qdev, wires = qubit, params = np.pi/2)
+                    conv_count += 1
+            for i, qubit in enumerate(active_qubits):
+                if i % 2 == 1 and i < len(active_qubits)-1:
+                    tqf.rz(qdev, wires = active_qubits[i+1], params = -np.pi/2)
+                    tqf.cx(qdev, wires = [active_qubits[i+1], qubit])
+                    self.conv_rz[conv_count](qdev, wires = qubit)
+                    self.conv_ry[conv_count](qdev, wires = active_qubits[i+1])
+                    tqf.cx(qdev, wires = [qubit, active_qubits[i+1]])
+                    self.conv_ry2[conv_count](qdev, wires = active_qubits[i+1])
+                    tqf.cx(qdev, wires = [active_qubits[i+1], qubit])
+                    tqf.rz(qdev, wires = qubit, params = np.pi/2)
+                    conv_count += 1
+            
+            # apply pooling gates
+            meas_qubits = []
+            remain_qubits = []
+            for i, qubit in enumerate(active_qubits):
+                if i % 2 == 0:
+                    meas_qubits.append(qubit)
+                else:
+                    remain_qubits.append(qubit)
+            
+            _ = tqm.expval(qdev, meas_qubits, [self.meas_basis()] * len(meas_qubits))
+            for qub in remain_qubits:
+                self.pool_gates[pool_count](qdev, wires = qub)
+                pool_count += 1
+
+            active_qubits = copy.deepcopy(remain_qubits)
+
+        # final measurement
+        x = tqm.expval(qdev, active_qubits, [self.meas_basis()] * len(active_qubits))
+
+        # classification
+        x = self.mlp_class(x)
+        x = torch.sigmoid(x)
+        return x
+    
+class QCNN_ZNOTY_Shared(nn.Module):
+    """ This is a variation of the QCNN_ZNOTY class, 
+        where all the gates in the same layer have 
+        shared weights, in other words, all the 
+        conv gates in the first layer are the same.
+    """
+    def __init__(self,circuit_builder, n_qubits = 8, n_cycles = 4):
+        super().__init__()
+        self.n_qubits = n_qubits
+        self.n_cycles = n_cycles
+        self.circuit_builder = circuit_builder(n_qubits, n_cycles)
+        
+        self.n_layers = int(np.log(self.n_qubits)/np.log(2) - 1)
+        self.meas_basis = tq.PauliZ
+
+        # initialize convolutional gates
+        self.conv_rz = nn.ModuleList([
+            tq.RZ(has_params=True, trainable=True) for _ in range(self.n_layers)
+        ])
+        self.conv_ry = nn.ModuleList([
+            tq.RY(has_params=True, trainable=True) for _ in range(self.n_layers)
+        ])
+        self.conv_ry2 = nn.ModuleList([
+            tq.RY(has_params=True, trainable=True) for _ in range(self.n_layers)
+        ])
+
+        # initialize pooling gates
+        self.pool_gates = nn.ModuleList([
+            tq.U3(has_params=True, trainable=True) for _ in range(self.n_layers)
+        ])
+
+        # initialize multilevel perceptron layer
+        self.mlp_class = nn.Sequential(nn.Linear(2, 10), nn.Tanh(), nn.Linear(10, 1))
+
+    def forward(self, x):
+        """x is input"""
+
+        # create a quantum device to run the gates
+        qdev = tq.QuantumDevice(n_wires=self.n_qubits, device = 'cpu')
+
+        # prepare majorana circuit
+        qdev = self.circuit_builder.generate_circuit(qdev, x)
+
+        # apply log_2(n_qubits) - 1 layers of conv/pooling gates
+        active_qubits = range(self.n_qubits)
+        for layer in range(self.n_layers):
+
+            # apply convolution gates
+            for i, qubit in enumerate(active_qubits):
+                if i % 2 == 0 and i < len(active_qubits)-1:
+                    tqf.rz(qdev, wires = active_qubits[i+1], params = -np.pi/2)
+                    tqf.cx(qdev, wires = [active_qubits[i+1], qubit])
+                    self.conv_rz[layer](qdev, wires = qubit)
+                    self.conv_ry[layer](qdev, wires = active_qubits[i+1])
+                    tqf.cx(qdev, wires = [qubit, active_qubits[i+1]])
+                    self.conv_ry2[layer](qdev, wires = active_qubits[i+1])
+                    tqf.cx(qdev, wires = [active_qubits[i+1], qubit])
+                    tqf.rz(qdev, wires = qubit, params = np.pi/2)
+            for i, qubit in enumerate(active_qubits):
+                if i % 2 == 1 and i < len(active_qubits)-1:
+                    tqf.rz(qdev, wires = active_qubits[i+1], params = -np.pi/2)
+                    tqf.cx(qdev, wires = [active_qubits[i+1], qubit])
+                    self.conv_rz[layer](qdev, wires = qubit)
+                    self.conv_ry[layer](qdev, wires = active_qubits[i+1])
+                    tqf.cx(qdev, wires = [qubit, active_qubits[i+1]])
+                    self.conv_ry2[layer](qdev, wires = active_qubits[i+1])
+                    tqf.cx(qdev, wires = [active_qubits[i+1], qubit])
+                    tqf.rz(qdev, wires = qubit, params = np.pi/2)
+            
+            # apply pooling gates
+            meas_qubits = []
+            remain_qubits = []
+            for i, qubit in enumerate(active_qubits):
+                if i % 2 == 0:
+                    meas_qubits.append(qubit)
+                else:
+                    remain_qubits.append(qubit)
+            
+            _ = tqm.expval(qdev, meas_qubits, [self.meas_basis()] * len(meas_qubits))
+            for qub in remain_qubits:
+                self.pool_gates[layer](qdev, wires = qub)
+
+            active_qubits = copy.deepcopy(remain_qubits)
+
+        # final measurement
+        x = tqm.expval(qdev, active_qubits, [self.meas_basis()] * len(active_qubits))
+
+        # classification
+        x = self.mlp_class(x)
+        x = torch.sigmoid(x)
+        return x
+    
+class QCNN_Base_Shared(nn.Module):
+    """ This is a variation of the QCNN_BASE class, 
+        where all the gates in the same layer have 
+        shared weights, in other words, all the 
+        conv gates in the first layer are the same.
+    """
+    def __init__(self,circuit_builder, n_qubits = 8, n_cycles = 4):
+        super().__init__()
+        self.n_qubits = n_qubits
+        self.n_cycles = n_cycles
+        self.circuit_builder = circuit_builder(n_qubits, n_cycles)
+        
+        self.n_layers = int(np.log(self.n_qubits)/np.log(2) - 1)
+        self.meas_basis = tq.PauliZ
+
+        # initialize convolutional gates
+        self.conv_gates = nn.ModuleList([
+            tq.CRX(has_params=True, trainable=True) for _ in range(self.n_layers)
+        ])
+
+        # initialize pooling gates
+        self.pool_gates = nn.ModuleList([
+            tq.U3(has_params=True, trainable=True) for _ in range(self.n_layers)
+        ])
+
+        # initialize multilevel perceptron layer
+        self.mlp_class = nn.Sequential(nn.Linear(2, 10), nn.Tanh(), nn.Linear(10, 1))
+
+    def forward(self, x):
+        """x is input"""
+
+        # create a quantum device to run the gates
+        qdev = tq.QuantumDevice(n_wires=self.n_qubits, device = 'cpu')
+
+        # prepare majorana circuit
+        qdev = self.circuit_builder.generate_circuit(qdev, x)
+
+        # apply log_2(n_qubits) - 1 layers of conv/pooling gates
+        active_qubits = range(self.n_qubits)
+        for layer in range(self.n_layers):
+
+            # apply convolution gates
+            for i, qubit in enumerate(active_qubits):
+                if i % 2 == 0 and i < len(active_qubits)-1:
+                    self.conv_gates[layer](qdev, wires = [qubit,active_qubits[i+1]])
+            for i, qubit in enumerate(active_qubits):
+                if i % 2 == 1 and i < len(active_qubits)-1:
+                    self.conv_gates[layer](qdev, wires = [qubit,active_qubits[i+1]])
+            
+            # apply pooling gates
+            meas_qubits = []
+            remain_qubits = []
+            for i, qubit in enumerate(active_qubits):
+                if i % 2 == 0:
+                    meas_qubits.append(qubit)
+                else:
+                    remain_qubits.append(qubit)
+            
+            _ = tqm.expval(qdev, meas_qubits, [self.meas_basis()] * len(meas_qubits))
+            for qub in remain_qubits:
+                self.pool_gates[layer](qdev, wires = qub)
+
+            active_qubits = copy.deepcopy(remain_qubits)
+
+        # final measurement
+        x = tqm.expval(qdev, active_qubits, [self.meas_basis()] * len(active_qubits))
+
+        # classification
+        x = self.mlp_class(x)
+        x = torch.sigmoid(x)
+        return x
+    
 #############################
 ## Base Model + Variations ##
 ##     (n feature maps)    ##
 #############################
 
+
 # Three Feature Maps of CRX, CRY, CRZ for Convolutional Layers with Shared Weights
-class QCNN_Shared(nn.Module):
+class QCNN_Shared_Old(nn.Module):
     """ This is a variation of QCNN_BASE where
         we implement 3 feature maps for the first 
         convolutional layer, each with a different
