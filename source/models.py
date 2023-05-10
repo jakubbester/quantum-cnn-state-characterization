@@ -12,7 +12,7 @@ import torchquantum.functional as tqf
 import torchquantum.measurement as tqm
 from source.state_prep import *
 import copy
-from .shared import SharedWeights
+from .archive.shared import SharedWeights
 
 ##############################################
 ## Naive Implementations (for benchmarking) ##
