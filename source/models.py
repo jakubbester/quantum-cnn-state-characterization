@@ -712,6 +712,141 @@ class QCNN_Base_Shared(nn.Module):
 ##     (n feature maps)    ##
 #############################
 
+class QCNN_Shared_2c(nn.Module):
+    """ This is a variation of QCNN_BASE where
+        we implement 2 feature maps for the first 
+        convolutional layer, each with a different
+        unitary (CRX, ZNOTY). We feed the
+        measurement results into a fully connected
+        MLP at the end. All of the feature maps
+        have shared weights.
+    """
+    def __init__(self, circuit_builder, n_qubits = 8, n_cycles = 4):
+        super().__init__()
+        self.n_qubits = n_qubits
+        self.n_layers = int(np.log(self.n_qubits)/np.log(2) - 1)
+        self.n_cycles = n_cycles
+        self.circuit_builder = circuit_builder(n_qubits, n_cycles)
+
+        self.meas_basis = tq.PauliZ
+
+        # initialize convolutional gates
+        self.conv_rz = nn.ModuleList([
+            tq.RZ(has_params=True, trainable=True) for _ in range(self.n_layers)
+        ])
+        self.conv_ry = nn.ModuleList([
+            tq.RY(has_params=True, trainable=True) for _ in range(self.n_layers)
+        ])
+        self.conv_ry2 = nn.ModuleList([
+            tq.RY(has_params=True, trainable=True) for _ in range(self.n_layers)
+        ])
+
+        self.conv_crx = nn.ModuleList([
+            tq.CRX(has_params=True, trainable=True) for _ in range(self.n_layers)
+        ])
+
+        # initialize pooling gates
+        self.pool_gates = nn.ModuleList([
+            tq.U3(has_params=True, trainable=True) for _ in range(self.n_layers)
+        ])     
+        
+        self.pool_gates_circ2 = nn.ModuleList([
+            tq.U3(has_params=True, trainable=True) for _ in range(self.n_layers)
+        ])
+
+        #multilevel perceptron layer
+        self.mlp_class = nn.Sequential(nn.Linear(4, 15), nn.Tanh(), nn.Linear(15, 1))
+
+    def forward(self, x):
+        """x is an input"""
+
+        # create a quantum device to run the gates
+        qdev = tq.QuantumDevice(n_wires=self.n_qubits, device = 'cpu')
+
+        # prepare majorana circuit
+        qdev = self.circuit_builder.generate_circuit(qdev, x)
+
+        # Create copies of circuit for parallel feature maps
+        qdev1 = copy.deepcopy(qdev)
+
+        # STEP 1: add trainable gates for QCNN circuit
+        
+        active_qubits = range(self.n_qubits)
+        for layer in range(self.n_layers):
+
+            # apply convolution gates
+            for i, qubit in enumerate(active_qubits):
+                if i % 2 == 0 and i < len(active_qubits)-1:
+                    tqf.rz(qdev, wires = active_qubits[i+1], params = -np.pi/2)
+                    tqf.cx(qdev, wires = [active_qubits[i+1], qubit])
+                    self.conv_rz[layer](qdev, wires = qubit)
+                    self.conv_ry[layer](qdev, wires = active_qubits[i+1])
+                    tqf.cx(qdev, wires = [qubit, active_qubits[i+1]])
+                    self.conv_ry2[layer](qdev, wires = active_qubits[i+1])
+                    tqf.cx(qdev, wires = [active_qubits[i+1], qubit])
+                    tqf.rz(qdev, wires = qubit, params = np.pi/2)
+        
+            for i, qubit in enumerate(active_qubits):
+                if i % 2 == 1 and i < len(active_qubits)-1:
+                    tqf.rz(qdev, wires = active_qubits[i+1], params = -np.pi/2)
+                    tqf.cx(qdev, wires = [active_qubits[i+1], qubit])
+                    self.conv_rz[layer](qdev, wires = qubit)
+                    self.conv_ry[layer](qdev, wires = active_qubits[i+1])
+                    tqf.cx(qdev, wires = [qubit, active_qubits[i+1]])
+                    self.conv_ry2[layer](qdev, wires = active_qubits[i+1])
+                    tqf.cx(qdev, wires = [active_qubits[i+1], qubit])
+                    tqf.rz(qdev, wires = qubit, params = np.pi/2)
+            
+            # apply pooling gates
+            meas_qubits = []
+            remain_qubits = []
+            for i, qubit in enumerate(active_qubits):
+                if i % 2 == 0:
+                    meas_qubits.append(qubit)
+                else:
+                    remain_qubits.append(qubit)
+            
+            _ = tqm.expval(qdev, meas_qubits, [self.meas_basis()] * len(meas_qubits))
+            for qub in remain_qubits:
+                self.pool_gates[layer](qdev, wires = qub)
+
+            # THE OTHER CIRCUIT
+
+            # apply convolution gates
+            for i, qubit in enumerate(active_qubits):
+                if i % 2 == 0 and i < len(active_qubits)-1:
+                    self.conv_crx[layer](qdev1, wires = [qubit,active_qubits[i+1]])
+            for i, qubit in enumerate(active_qubits):
+                if i % 2 == 1 and i < len(active_qubits)-1:
+                    self.conv_crx[layer](qdev1, wires = [qubit,active_qubits[i+1]])
+            
+            # apply pooling gates
+            meas_qubits = []
+            remain_qubits = []
+            for i, qubit in enumerate(active_qubits):
+                if i % 2 == 0:
+                    meas_qubits.append(qubit)
+                else:
+                    remain_qubits.append(qubit)
+            
+            _ = tqm.expval(qdev1, meas_qubits, [self.meas_basis()] * len(meas_qubits))
+            for qub in remain_qubits:
+                self.pool_gates_circ2[layer](qdev1, wires = qub)
+
+            active_qubits = copy.deepcopy(remain_qubits)
+
+        # final measurement
+        x = tqm.expval(qdev, active_qubits, [self.meas_basis()] * len(active_qubits))
+        y = tqm.expval(qdev1, active_qubits, [self.meas_basis()] * len(active_qubits))
+
+        # SAME OPERATIONS BUT FOR THE OTHER FEATURE MAPS
+
+        
+
+        # classification
+        result = self.mlp_class(torch.cat((x,y), 1))
+        result = torch.sigmoid(result)
+        return result
 
 # Three Feature Maps of CRX, CRY, CRZ for Convolutional Layers with Shared Weights
 class QCNN_Shared_Old(nn.Module):
