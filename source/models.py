@@ -249,7 +249,6 @@ class QCNN_Base(nn.Module):
         x = torch.sigmoid(x)
         return x
 
-
 # Two-Qubit Unitary of RZ, CNOT, and RY for convolution
 class QCNN_ZNOTY_OLD(nn.Module):
     """ This is a variation of the QCNN_BASE class, 
@@ -1378,7 +1377,7 @@ class QCNN_ZNOTY_Diff(nn.Module):
 
         # final measurement
         x = tqm.expval(qdev, active_qubits, [self.meas_basis()] * len(active_qubits))
-        
+
         # Same Operations for the second feature map
         # first convolutional layer
         self.crx10(qdev1, wires=[0, 1])
@@ -1417,7 +1416,7 @@ class QCNN_ZNOTY_Diff(nn.Module):
         result = self.mlp_class(torch.cat((x,y), 1))
         result = torch.sigmoid(result)
         return result
-    
+
 
 #######################
 ## UNDER DEVELOPMENT ##
