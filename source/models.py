@@ -1128,90 +1128,32 @@ class QCNN_ZNOTY_Diff(nn.Module):
         MLP at the end. The feature maps have
         unique weights.
     """
+    
     # we added circuit_builder (which comes from state_prep.py file), this is the class that makes the input circuits that we want to extract information from (the Majorana circuits)
-    def __init__(self, circuit_builder, n_qubits = 8, n_cycles = 4):
+    def __init__(self,circuit_builder, n_qubits = 8, n_cycles = 4):
         super().__init__()
         self.n_qubits = n_qubits
         self.n_cycles = n_cycles
         self.circuit_builder = circuit_builder(n_qubits, n_cycles)
-
+        
+        self.n_layers = int(np.log(self.n_qubits)/np.log(2) - 1)
         self.meas_basis = tq.PauliZ
 
-        # first convolutional layer
-        self.rz1 = tq.RZ(has_params=True, trainable=True)
-        self.rz2 = tq.RZ(has_params=True, trainable=True)
-        self.rz3 = tq.RZ(has_params=True, trainable=True)
-        self.cnot1 = tq.CNOT(has_params=True, trainable=True)
-        self.cnot2 = tq.CNOT(has_params=True, trainable=True)
-        self.cnot3 = tq.CNOT(has_params=True, trainable=True)
-        self.ry1 = tq.RY(has_params=True, trainable=True)
-        self.ry2 = tq.RY(has_params=True, trainable=True)
+        # initialize convolutional gates
+        self.conv_rz = nn.ModuleList([
+            tq.RZ(has_params=True, trainable=True) for _ in range(12)
+        ])
+        self.conv_ry = nn.ModuleList([
+            tq.RY(has_params=True, trainable=True) for _ in range(12)
+        ])
+        self.conv_ry2 = nn.ModuleList([
+            tq.RY(has_params=True, trainable=True) for _ in range(12)
+        ])
 
-        self.rz4 = tq.RZ(has_params=True, trainable=True)
-        self.rz5 = tq.RZ(has_params=True, trainable=True)
-        self.rz6 = tq.RZ(has_params=True, trainable=True)
-        self.cnot4 = tq.CNOT(has_params=True, trainable=True)
-        self.cnot5 = tq.CNOT(has_params=True, trainable=True)
-        self.cnot6 = tq.CNOT(has_params=True, trainable=True)
-        self.ry3 = tq.RY(has_params=True, trainable=True)
-        self.ry4 = tq.RY(has_params=True, trainable=True)
-
-        self.rz7 = tq.RZ(has_params=True, trainable=True)
-        self.rz8 = tq.RZ(has_params=True, trainable=True)
-        self.rz9 = tq.RZ(has_params=True, trainable=True)
-        self.cnot7 = tq.CNOT(has_params=True, trainable=True)
-        self.cnot8 = tq.CNOT(has_params=True, trainable=True)
-        self.cnot9 = tq.CNOT(has_params=True, trainable=True)
-        self.ry5 = tq.RY(has_params=True, trainable=True)
-        self.ry6 = tq.RY(has_params=True, trainable=True)
-
-        self.rz10 = tq.RZ(has_params=True, trainable=True)
-        self.rz11 = tq.RZ(has_params=True, trainable=True)
-        self.rz12 = tq.RZ(has_params=True, trainable=True)
-        self.cnot10 = tq.CNOT(has_params=True, trainable=True)
-        self.cnot11 = tq.CNOT(has_params=True, trainable=True)
-        self.cnot12 = tq.CNOT(has_params=True, trainable=True)
-        self.ry7 = tq.RY(has_params=True, trainable=True)
-        self.ry8 = tq.RY(has_params=True, trainable=True)
-
-        # first pooling layer
-        self.u3_0 = tq.U3(has_params=True, trainable=True)
-        self.u3_1 = tq.U3(has_params=True, trainable=True)
-        self.u3_2 = tq.U3(has_params=True, trainable=True)
-        self.u3_3 = tq.U3(has_params=True, trainable=True)
-
-        # second convolutional layer
-       
-        self.rz13 = tq.RZ(has_params=True, trainable=True)
-        self.rz14 = tq.RZ(has_params=True, trainable=True)
-        self.rz15 = tq.RZ(has_params=True, trainable=True)
-        self.cnot13 = tq.CNOT(has_params=True, trainable=True)
-        self.cnot14 = tq.CNOT(has_params=True, trainable=True)
-        self.cnot15 = tq.CNOT(has_params=True, trainable=True)
-        self.ry9 = tq.RY(has_params=True, trainable=True)
-        self.ry10 = tq.RY(has_params=True, trainable=True)
-
-        self.rz16 = tq.RZ(has_params=True, trainable=True)
-        self.rz17 = tq.RZ(has_params=True, trainable=True)
-        self.rz18 = tq.RZ(has_params=True, trainable=True)
-        self.cnot16 = tq.CNOT(has_params=True, trainable=True)
-        self.cnot17 = tq.CNOT(has_params=True, trainable=True)
-        self.cnot18 = tq.CNOT(has_params=True, trainable=True)
-        self.ry11 = tq.RY(has_params=True, trainable=True)
-        self.ry12 = tq.RY(has_params=True, trainable=True)
-
-        self.rz19 = tq.RZ(has_params=True, trainable=True)
-        self.rz20 = tq.RZ(has_params=True, trainable=True)
-        self.rz21 = tq.RZ(has_params=True, trainable=True)
-        self.cnot19 = tq.CNOT(has_params=True, trainable=True)
-        self.cnot20 = tq.CNOT(has_params=True, trainable=True)
-        self.cnot21 = tq.CNOT(has_params=True, trainable=True)
-        self.ry13 = tq.RY(has_params=True, trainable=True)
-        self.ry14 = tq.RY(has_params=True, trainable=True)
-
-        # second pooling layer
-        self.u3_4 = tq.U3(has_params=True, trainable=True)
-        self.u3_5 = tq.U3(has_params=True, trainable=True)
+        # initialize pooling gates
+        self.pool_gates = nn.ModuleList([
+            tq.U3(has_params=True, trainable=True) for _ in range(6)
+        ])
 
         # Second Filter
         # first convolutional layer
@@ -1238,11 +1180,12 @@ class QCNN_ZNOTY_Diff(nn.Module):
         self.u3_14 = tq.U3(has_params=True, trainable=True)
         self.u3_15 = tq.U3(has_params=True, trainable=True)
 
-        # multilevel perceptron layer
-        self.mlp_class = nn.Sequential(nn.Linear(4, 16), nn.Tanh(), nn.Linear(16, 1))
+        # initialize multilevel perceptron layer
+        self.mlp_class = nn.Sequential(nn.Linear(2, 10), nn.Tanh(), nn.Linear(10, 1))
+       
 
     def forward(self, x):
-        """x is an input"""
+        """x is input"""
 
         # create a quantum device to run the gates
         qdev = tq.QuantumDevice(n_wires=self.n_qubits, device = 'cpu')
@@ -1252,92 +1195,55 @@ class QCNN_ZNOTY_Diff(nn.Module):
 
         qdev1 = copy.deepcopy(qdev)
 
-        # STEP 1: add trainable gates for QCNN circuit
+        # apply log_2(n_qubits) - 1 layers of conv/pooling gates
+        active_qubits = range(self.n_qubits)
+        conv_count = 0
+        pool_count = 0
+        for layer in range(self.n_layers):
+
+            # apply convolution gates
+            for i, qubit in enumerate(active_qubits):
+                if i % 2 == 0 and i < len(active_qubits)-1:
+                    tqf.rz(qdev, wires = active_qubits[i+1], params = -np.pi/2)
+                    tqf.cx(qdev, wires = [active_qubits[i+1], qubit])
+                    self.conv_rz[conv_count](qdev, wires = qubit)
+                    self.conv_ry[conv_count](qdev, wires = active_qubits[i+1])
+                    tqf.cx(qdev, wires = [qubit, active_qubits[i+1]])
+                    self.conv_ry2[conv_count](qdev, wires = active_qubits[i+1])
+                    tqf.cx(qdev, wires = [active_qubits[i+1], qubit])
+                    tqf.rz(qdev, wires = qubit, params = np.pi/2)
+                    conv_count += 1
+            for i, qubit in enumerate(active_qubits):
+                if i % 2 == 1 and i < len(active_qubits)-1:
+                    tqf.rz(qdev, wires = active_qubits[i+1], params = -np.pi/2)
+                    tqf.cx(qdev, wires = [active_qubits[i+1], qubit])
+                    self.conv_rz[conv_count](qdev, wires = qubit)
+                    self.conv_ry[conv_count](qdev, wires = active_qubits[i+1])
+                    tqf.cx(qdev, wires = [qubit, active_qubits[i+1]])
+                    self.conv_ry2[conv_count](qdev, wires = active_qubits[i+1])
+                    tqf.cx(qdev, wires = [active_qubits[i+1], qubit])
+                    tqf.rz(qdev, wires = qubit, params = np.pi/2)
+                    conv_count += 1
+            
+            # apply pooling gates
+            meas_qubits = []
+            remain_qubits = []
+            for i, qubit in enumerate(active_qubits):
+                if i % 2 == 0:
+                    meas_qubits.append(qubit)
+                else:
+                    remain_qubits.append(qubit)
+            
+            _ = tqm.expval(qdev, meas_qubits, [self.meas_basis()] * len(meas_qubits))
+            for qub in remain_qubits:
+                self.pool_gates[pool_count](qdev, wires = qub)
+                pool_count += 1
+
+            active_qubits = copy.deepcopy(remain_qubits)
+
+        # final measurement
+        x = tqm.expval(qdev, active_qubits, [self.meas_basis()] * len(active_qubits))
         
-        # first convolutional layer
-        self.rz1(qdev, wires = 1)
-        self.cnot1(qdev, wires = [1,0])
-        self.rz2(qdev, wires = 0)
-        self.ry1(qdev, wires = 1)
-        self.cnot2(qdev, wires = [0,1])
-        self.ry2(qdev, wires = 1)
-        self.cnot3(qdev, wires = [1,0])
-        self.rz3(qdev, wires = 0)
-
-        self.rz4(qdev, wires = 3)
-        self.cnot4(qdev, wires = [3,2])
-        self.rz5(qdev, wires = 2)
-        self.ry3(qdev, wires = 3)
-        self.cnot5(qdev, wires = [2,3])
-        self.ry4(qdev, wires = 3)
-        self.cnot6(qdev, wires = [3,2])
-        self.rz6(qdev, wires = 2)
-
-        self.rz7(qdev, wires = 5)
-        self.cnot7(qdev, wires = [5,4])
-        self.rz8(qdev, wires = 4)
-        self.ry5(qdev, wires = 5)
-        self.cnot8(qdev, wires = [4,5])
-        self.ry6(qdev, wires = 5)
-        self.cnot9(qdev, wires = [5,4])
-        self.rz9(qdev, wires = 4)
-
-        self.rz10(qdev, wires = 7)
-        self.cnot10(qdev, wires = [7,6])
-        self.rz11(qdev, wires = 6)
-        self.ry7(qdev, wires = 7)
-        self.cnot11(qdev, wires = [6,7])
-        self.ry8(qdev, wires = 7)
-        self.cnot12(qdev, wires = [7,6])
-        self.rz12(qdev, wires = 6)
-
-        # first pooling layer
-        meas_qubits = [0,2,4,6]
-        _  = tqm.expval(qdev, meas_qubits, [self.meas_basis()] * len(meas_qubits))
-
-        self.u3_0(qdev, wires = 1)
-        self.u3_1(qdev, wires = 3)
-        self.u3_2(qdev, wires = 5)
-        self.u3_3(qdev, wires = 7)
-
-        # second convolutional layer
-        self.rz13(qdev, wires = 3)
-        self.cnot13(qdev, wires = [3,1])
-        self.rz14(qdev, wires = 1)
-        self.ry9(qdev, wires = 3)
-        self.cnot14(qdev, wires = [1,3])
-        self.ry10(qdev, wires = 3)
-        self.cnot15(qdev, wires = [3,1])
-        self.rz15(qdev, wires = 1)
-
-        self.rz16(qdev, wires = 7)
-        self.cnot16(qdev, wires = [7,5])
-        self.rz17(qdev, wires = 5)
-        self.ry11(qdev, wires = 7)
-        self.cnot17(qdev, wires = [5,7])
-        self.ry12(qdev, wires = 7)
-        self.cnot18(qdev, wires = [7,5])
-        self.rz18(qdev, wires = 5)
-
-        self.rz19(qdev, wires = 5)
-        self.cnot19(qdev, wires = [5,3])
-        self.rz20(qdev, wires = 3)
-        self.ry13(qdev, wires = 5)
-        self.cnot20(qdev, wires = [3,5])
-        self.ry14(qdev, wires = 5)
-        self.cnot21(qdev, wires = [5,3])
-        self.rz21(qdev, wires = 3)
-
-        # second pooling layer
-        meas_qubits = [1,5]
-        _ = tqm.expval(qdev, meas_qubits, [self.meas_basis()] * len(meas_qubits))
-        self.u3_4(qdev, wires = 3)
-        self.u3_5(qdev, wires = 7)
-
-        # perform measurement to get expectations (back to classical domain)
-        meas_qubits = [3,7]
-        x = tqm.expval(qdev, meas_qubits, [self.meas_basis()] * len(meas_qubits))
-
         # Same Operations for the second feature map
         # first convolutional layer
         self.crx10(qdev1, wires=[0, 1])
